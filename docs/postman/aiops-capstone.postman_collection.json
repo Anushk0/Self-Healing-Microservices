@@ -1,0 +1,278 @@
+{
+  "info": {
+    "name": "AIOps Capstone - full API",
+    "description": "Every endpoint the four Spring Boot services expose, in the order a real request flows through them (login -> payment -> ledger -> notification), plus Actuator, the four controlled fault-injection endpoints and their resets.\n\nRoadmap note: a Postman collection was a Week 1/Week 2 deliverable that was never actually created at the time; this collection was written in Week 10 and covers everything through Week 4 rather than only Weeks 1-2.\n\nUsage: set the `baseUrl*` variables to match how you are running the stack (native processes and Docker Compose both publish the same localhost ports; for Kubernetes use `kubectl port-forward svc/<service> <port>:<port>` first). Run 'Login' first - it captures the JWT into the `token` collection variable automatically, so every later request is ready to send.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrlAuth", "value": "http://localhost:8081" },
+    { "key": "baseUrlPayment", "value": "http://localhost:8082" },
+    { "key": "baseUrlLedger", "value": "http://localhost:8083" },
+    { "key": "baseUrlNotification", "value": "http://localhost:8084" },
+    { "key": "token", "value": "" },
+    { "key": "accountId", "value": "acct-42" },
+    { "key": "correlationId", "value": "postman-demo-001" }
+  ],
+  "item": [
+    {
+      "name": "1. Happy path",
+      "item": [
+        {
+          "name": "Login (captures JWT)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "var body = pm.response.json();",
+                  "pm.collectionVariables.set('token', body.token);",
+                  "pm.test('returned a bearer token', function () { pm.expect(body.token).to.be.a('string').and.not.empty; });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{correlationId}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"alice\",\n  \"password\": \"alice-pass\"\n}" },
+            "url": { "raw": "{{baseUrlAuth}}/api/auth/login", "host": ["{{baseUrlAuth}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "Validate token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "pm.test('token is valid', function () { pm.expect(pm.response.json().valid).to.eql(true); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Correlation-Id", "value": "{{correlationId}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{token}}\"\n}" },
+            "url": { "raw": "{{baseUrlAuth}}/api/auth/validate", "host": ["{{baseUrlAuth}}"], "path": ["api", "auth", "validate"] }
+          }
+        },
+        {
+          "name": "Get account balance (before)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-Id", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrlLedger}}/api/accounts/{{accountId}}",
+              "host": ["{{baseUrlLedger}}"], "path": ["api", "accounts", "{{accountId}}"]
+            }
+          }
+        },
+        {
+          "name": "Payment (full chain: auth -> ledger -> notification)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', function () { pm.response.to.have.status(200); });",
+                  "var body = pm.response.json();",
+                  "pm.test('payment accepted', function () { pm.expect(body.status).to.eql('ACCEPTED'); });",
+                  "pm.test('ledger transaction recorded', function () { pm.expect(body.ledgerTransactionId).to.be.a('string'); });",
+                  "pm.test('correlation id echoed back', function () { pm.expect(pm.response.headers.get('X-Correlation-Id')).to.be.a('string'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" },
+              { "key": "X-Correlation-Id", "value": "{{correlationId}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"accountId\": \"{{accountId}}\",\n  \"currency\": \"USD\",\n  \"amount\": 1.00\n}" },
+            "url": { "raw": "{{baseUrlPayment}}/api/payments", "host": ["{{baseUrlPayment}}"], "path": ["api", "payments"] }
+          }
+        },
+        {
+          "name": "Get account balance (after - should be lower)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "X-Correlation-Id", "value": "{{correlationId}}" }],
+            "url": {
+              "raw": "{{baseUrlLedger}}/api/accounts/{{accountId}}",
+              "host": ["{{baseUrlLedger}}"], "path": ["api", "accounts", "{{accountId}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Error paths",
+      "item": [
+        {
+          "name": "Login with bad credentials -> 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": [
+                "pm.test('401 Unauthorized', function () { pm.response.to.have.status(401); });",
+                "pm.test('no stack trace leaked', function () { pm.expect(pm.response.text()).to.not.include('Exception'); });"
+              ] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"alice\",\n  \"password\": \"wrong-password\"\n}" },
+            "url": { "raw": "{{baseUrlAuth}}/api/auth/login", "host": ["{{baseUrlAuth}}"], "path": ["api", "auth", "login"] }
+          }
+        },
+        {
+          "name": "Payment with no Authorization header -> 401",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('401 Unauthorized', function () { pm.response.to.have.status(401); });"
+            ] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"accountId\": \"{{accountId}}\",\n  \"currency\": \"USD\",\n  \"amount\": 1.00\n}" },
+            "url": { "raw": "{{baseUrlPayment}}/api/payments", "host": ["{{baseUrlPayment}}"], "path": ["api", "payments"] }
+          }
+        },
+        {
+          "name": "Payment with unknown account -> 404",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('404 Not Found', function () { pm.response.to.have.status(404); });"
+            ] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"accountId\": \"acct-does-not-exist\",\n  \"currency\": \"USD\",\n  \"amount\": 1.00\n}" },
+            "url": { "raw": "{{baseUrlPayment}}/api/payments", "host": ["{{baseUrlPayment}}"], "path": ["api", "payments"] }
+          }
+        },
+        {
+          "name": "Payment exceeding balance -> 409",
+          "event": [
+            { "listen": "test", "script": { "type": "text/javascript", "exec": [
+              "pm.test('409 Conflict (insufficient funds)', function () { pm.response.to.have.status(409); });"
+            ] } }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"accountId\": \"{{accountId}}\",\n  \"currency\": \"USD\",\n  \"amount\": 999999999.00\n}" },
+            "url": { "raw": "{{baseUrlPayment}}/api/payments", "host": ["{{baseUrlPayment}}"], "path": ["api", "payments"] }
+          }
+        },
+        {
+          "name": "Payment with mismatched currency -> 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"accountId\": \"{{accountId}}\",\n  \"currency\": \"EUR\",\n  \"amount\": 1.00\n}" },
+            "url": { "raw": "{{baseUrlPayment}}/api/payments", "host": ["{{baseUrlPayment}}"], "path": ["api", "payments"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Ledger direct",
+      "item": [
+        {
+          "name": "Create account",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"accountId\": \"acct-postman\",\n  \"currency\": \"USD\",\n  \"initialBalance\": 500.00\n}" },
+            "url": { "raw": "{{baseUrlLedger}}/api/accounts", "host": ["{{baseUrlLedger}}"], "path": ["api", "accounts"] }
+          }
+        },
+        {
+          "name": "Debit",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"accountId\": \"acct-postman\",\n  \"currency\": \"USD\",\n  \"amount\": 10.00\n}" },
+            "url": { "raw": "{{baseUrlLedger}}/api/ledger/debit", "host": ["{{baseUrlLedger}}"], "path": ["api", "ledger", "debit"] }
+          }
+        },
+        {
+          "name": "Credit",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"accountId\": \"acct-postman\",\n  \"currency\": \"USD\",\n  \"amount\": 10.00\n}" },
+            "url": { "raw": "{{baseUrlLedger}}/api/ledger/credit", "host": ["{{baseUrlLedger}}"], "path": ["api", "ledger", "credit"] }
+          }
+        },
+        {
+          "name": "Notification receipt (direct)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"accountId\": \"{{accountId}}\",\n  \"amount\": 1.00,\n  \"currency\": \"USD\",\n  \"transactionId\": \"postman-txn-1\"\n}" },
+            "url": { "raw": "{{baseUrlNotification}}/api/notifications/receipt", "host": ["{{baseUrlNotification}}"], "path": ["api", "notifications", "receipt"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Actuator",
+      "item": [
+        { "name": "auth health", "request": { "method": "GET", "url": { "raw": "{{baseUrlAuth}}/actuator/health", "host": ["{{baseUrlAuth}}"], "path": ["actuator", "health"] } } },
+        { "name": "payment health", "request": { "method": "GET", "url": { "raw": "{{baseUrlPayment}}/actuator/health", "host": ["{{baseUrlPayment}}"], "path": ["actuator", "health"] } } },
+        { "name": "ledger health", "request": { "method": "GET", "url": { "raw": "{{baseUrlLedger}}/actuator/health", "host": ["{{baseUrlLedger}}"], "path": ["actuator", "health"] } } },
+        { "name": "notification health", "request": { "method": "GET", "url": { "raw": "{{baseUrlNotification}}/actuator/health", "host": ["{{baseUrlNotification}}"], "path": ["actuator", "health"] } } },
+        { "name": "payment prometheus metrics", "request": { "method": "GET", "url": { "raw": "{{baseUrlPayment}}/actuator/prometheus", "host": ["{{baseUrlPayment}}"], "path": ["actuator", "prometheus"] } } }
+      ]
+    },
+    {
+      "name": "5. Fault injection (each has a matching reset)",
+      "description": "All four faults are disabled by default and resettable (CLAUDE.md rules 18-19). Always run the matching reset afterwards. GET /fault-status is read-only and safe to call at any time.",
+      "item": [
+        { "name": "auth: inject key error", "request": { "method": "POST", "url": { "raw": "{{baseUrlAuth}}/inject-auth-key-error", "host": ["{{baseUrlAuth}}"], "path": ["inject-auth-key-error"] } } },
+        { "name": "auth: RESET key", "request": { "method": "POST", "url": { "raw": "{{baseUrlAuth}}/reset-auth-key", "host": ["{{baseUrlAuth}}"], "path": ["reset-auth-key"] } } },
+        { "name": "auth: fault status", "request": { "method": "GET", "url": { "raw": "{{baseUrlAuth}}/fault-status", "host": ["{{baseUrlAuth}}"], "path": ["fault-status"] } } },
+
+        { "name": "payment: inject memory leak", "request": { "method": "POST", "url": { "raw": "{{baseUrlPayment}}/inject-memory-leak", "host": ["{{baseUrlPayment}}"], "path": ["inject-memory-leak"] } } },
+        { "name": "payment: RESET memory leak", "request": { "method": "POST", "url": { "raw": "{{baseUrlPayment}}/reset-memory-leak", "host": ["{{baseUrlPayment}}"], "path": ["reset-memory-leak"] } } },
+        { "name": "payment: fault status", "request": { "method": "GET", "url": { "raw": "{{baseUrlPayment}}/fault-status", "host": ["{{baseUrlPayment}}"], "path": ["fault-status"] } } },
+
+        { "name": "ledger: inject db lock", "request": { "method": "POST", "url": { "raw": "{{baseUrlLedger}}/inject-db-lock", "host": ["{{baseUrlLedger}}"], "path": ["inject-db-lock"] } } },
+        { "name": "ledger: RESET db lock", "request": { "method": "POST", "url": { "raw": "{{baseUrlLedger}}/reset-db-lock", "host": ["{{baseUrlLedger}}"], "path": ["reset-db-lock"] } } },
+        { "name": "ledger: fault status", "request": { "method": "GET", "url": { "raw": "{{baseUrlLedger}}/fault-status", "host": ["{{baseUrlLedger}}"], "path": ["fault-status"] } } },
+
+        { "name": "notification: inject latency", "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"delayMs\": 6000\n}" }, "url": { "raw": "{{baseUrlNotification}}/inject-latency", "host": ["{{baseUrlNotification}}"], "path": ["inject-latency"] } } },
+        { "name": "notification: RESET latency", "request": { "method": "POST", "url": { "raw": "{{baseUrlNotification}}/reset-latency", "host": ["{{baseUrlNotification}}"], "path": ["reset-latency"] } } },
+        { "name": "notification: fault status", "request": { "method": "GET", "url": { "raw": "{{baseUrlNotification}}/fault-status", "host": ["{{baseUrlNotification}}"], "path": ["fault-status"] } } }
+      ]
+    }
+  ]
+}
