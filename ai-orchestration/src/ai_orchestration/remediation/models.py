@@ -10,6 +10,12 @@ from pydantic import BaseModel, Field
 
 ActionCategory = Literal[
     "restore_configuration", "reset_fault_configuration", "release_resources",
+    # Week 10: the second rung of the escalation ladder, only ever proposed after a targeted
+    # fault-configuration reset has already been *tried and failed* for this incident (see
+    # proposer.py's `failed_actions` handling). Always `risk_level="high"`, because restarting a
+    # pod drops that instance's in-flight requests - which is exactly why the Safety Validator
+    # refuses it for ledger-service (mid-transaction state; see safety/validator.py).
+    "restart_service",
     "investigate_manually", "no_action_needed",
 ]
 RiskLevel = Literal["low", "medium", "high"]

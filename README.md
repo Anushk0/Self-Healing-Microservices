@@ -5,6 +5,43 @@ rules and weekly roadmap.
 
 ## Status
 
+Weeks 10-11 complete: the pipeline now closes the loop and has a comparison arm.
+**Week 10** executes an approved action against the running system (fault reset over HTTP, or a pod
+restart via the Kubernetes API - three fail-closed gates, no generic command path), then re-observes
+the service to check whether the fault actually cleared, escalates a failed or falsely-successful
+fix through a deterministic ladder where *every retry needs its own fresh approval*, and writes the
+finished incident back into retrieval memory with Evaluation-set incidents hard-refused (rule 22,
+enforced twice independently). **Week 11** adds a separate single-agent baseline - one LLM call for
+diagnosis and action - that shares every non-diagnostic node with the multi-agent arm, so the Week
+12 comparison isolates agent decomposition rather than retrieval or downstream safety.
+
+Also closed two gaps from earlier weeks: the Postman collection specified in Weeks 1-2
+(`docs/postman/`, 31 requests) and the per-service Kubernetes READMEs from Week 3.
+
+Live-verified by driving the console in a real browser: with no services and no cluster running,
+every remediation genuinely failed, which exercised the whole escalation ladder under real failure
+conditions - three real execution attempts, three separate approval pauses, terminal escalation
+executing nothing, MTTR 53.4s, and the feedback loop demonstrably closing (a later run retrieved
+incidents earlier runs had learned). That session also surfaced a measured finding: Isolation Forest
+*saturates* outside its training range - a 2 GB heap scores identically to a 50 MB one - which is
+documented as a limitation with a concrete mechanism rather than tuned away. 249 Python tests pass.
+See `ai-orchestration/README.md` for full architecture and live-verification detail.
+
+Week 9 complete: `ai-orchestration/` adds a deterministic Safety
+Validator (zero AI/LLM calls) and a genuinely mandatory human-approval
+gate via LangGraph's `interrupt()` - the graph cannot proceed past it
+without an external approve/reject signal. A rejected-by-safety
+proposal never reaches a human at all; a passed one pauses until `app.py`
+(new Streamlit console) or a test resumes it. Live-verified this week by
+driving the Streamlit console end-to-end in a real browser (no live
+Kubernetes deployment on this machine): a full pause → Approve cycle and
+a separate pause → Reject cycle, both with typed reasons that
+round-tripped correctly into the final result. That session also caught
+and fixed a real bug in the demo detector's synthetic training data
+(a zero-variance feature that stopped Isolation Forest from ever
+learning to split on it). See `ai-orchestration/README.md` for full
+architecture and live-verification detail.
+
 Week 8 complete: `ai-orchestration/` extends Week 7's LangGraph workflow
 with an RCA agent, RAG retrieval against Week 6's ChromaDB Memory
 collection, and a deterministic remediation-proposal generator - Week 8

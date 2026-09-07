@@ -110,3 +110,84 @@ def test_validate_no_leakage_tolerates_missing_evaluation_file(isolated_store):
     chroma_store.build_collection()
 
     assert chroma_store.validate_no_leakage() is True
+
+
+# --- Week 10: feedback write-back of incidents the pipeline itself learned ---------------------
+
+def test_pipeline_run_incident_is_added_alongside_the_memory_seeds(isolated_store):
+    ingest.write_jsonl([_incident("mem-1")], config.MEMORY_INCIDENTS_FILE)
+    collection = chroma_store.build_collection()
+
+    chroma_store.add_pipeline_run_incident(
+        "run-abc123", "Incident run-abc123: memory-leak on payment-service, heap rising.",
+        {"incident_id": "run-abc123", "fault_type": "memory-leak",
+         "root_cause_service": "payment-service", "symptom_service": "payment-service",
+         "severity": "unknown", "data_source": "pipeline_run", "source_incident_id": ""},
+    )
+
+    assert collection.count() == 2
+    assert set(collection.get()["ids"]) == {"mem-1", "run-abc123"}
+
+
+def test_validate_no_leakage_accepts_learned_pipeline_runs_but_still_rejects_evaluation_ids(isolated_store):
+    """A learned incident is legitimately not in the Week 6 Memory file. Validation has to tell
+    that apart from an actual leak, without weakening the Evaluation check itself."""
+    ingest.write_jsonl([_incident("mem-1")], config.MEMORY_INCIDENTS_FILE)
+    ingest.write_jsonl([_incident("eval-1")], config.EVALUATION_INCIDENTS_FILE)
+    collection = chroma_store.build_collection()
+
+    chroma_store.add_pipeline_run_incident(
+        "run-abc123", "text", {"incident_id": "run-abc123", "data_source": "pipeline_run"},
+    )
+    assert chroma_store.validate_no_leakage() is True
+
+    # An Evaluation incident forced in by any other means must still be caught.
+    collection.add(ids=["eval-1"], documents=["leaked"], metadatas=[{"incident_id": "eval-1"}])
+    with pytest.raises(chroma_store.EvaluationLeakageError):
+        chroma_store.validate_no_leakage()
+
+
+def test_validate_no_leakage_still_rejects_an_arbitrary_unprefixed_id(isolated_store):
+    """The prefix allowance must be narrow: anything that is neither a Memory seed nor an
+    explicitly-prefixed pipeline run is still an unexplained ID and must fail validation."""
+    ingest.write_jsonl([_incident("mem-1")], config.MEMORY_INCIDENTS_FILE)
+    collection = chroma_store.build_collection()
+
+    collection.add(ids=["mystery-1"], documents=["?"], metadatas=[{"incident_id": "mystery-1"}])
+
+    with pytest.raises(chroma_store.EvaluationLeakageError, match="not present in the Memory set"):
+        chroma_store.validate_no_leakage()
+
+
+def test_add_pipeline_run_incident_refuses_an_evaluation_derived_write(isolated_store):
+    """CLAUDE.md rule 22 at the store layer - the check that matters during Week 12, when
+    Evaluation incidents are deliberately replayed through the full pipeline."""
+    ingest.write_jsonl([_incident("mem-1")], config.MEMORY_INCIDENTS_FILE)
+    ingest.write_jsonl([_incident("eval-1")], config.EVALUATION_INCIDENTS_FILE)
+    collection = chroma_store.build_collection()
+
+    with pytest.raises(chroma_store.EvaluationLeakageError, match="rule 22"):
+        chroma_store.add_pipeline_run_incident(
+            "run-abc123", "text", {"source_incident_id": "eval-1"},
+        )
+
+    assert collection.count() == 1  # nothing was written, not even transiently
+
+
+def test_add_pipeline_run_incident_fails_closed_when_the_evaluation_file_is_missing(isolated_store):
+    """`ingest.read_jsonl` returns [] for a missing file, so an unreadable Evaluation set would
+    otherwise turn "cannot verify" into a silent "nothing to verify"."""
+    ingest.write_jsonl([_incident("mem-1")], config.MEMORY_INCIDENTS_FILE)
+    chroma_store.build_collection()
+    assert not config.EVALUATION_INCIDENTS_FILE.exists()
+
+    with pytest.raises(chroma_store.EvaluationLeakageError, match="does not exist"):
+        chroma_store.add_pipeline_run_incident("run-abc123", "text", {"source_incident_id": "inc-1"})
+
+
+def test_add_pipeline_run_incident_refuses_a_non_prefixed_id(isolated_store):
+    ingest.write_jsonl([_incident("mem-1")], config.MEMORY_INCIDENTS_FILE)
+    chroma_store.build_collection()
+
+    with pytest.raises(chroma_store.EvaluationLeakageError, match="prefixed with"):
+        chroma_store.add_pipeline_run_incident("inc-0042", "text", {})

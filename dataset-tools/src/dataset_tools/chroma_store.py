@@ -106,6 +106,54 @@ def _assert_no_evaluation_leakage(collection: chromadb.Collection) -> None:
         raise EvaluationLeakageError(f"Evaluation incident IDs found in ChromaDB collection: {sorted(leaked)}")
 
 
+def add_pipeline_run_incident(incident_id: str, postmortem_text: str, metadata: dict) -> None:
+    """Week 10 feedback write-back: adds ONE incident learned from a completed pipeline run to the
+    same collection Week 6 seeded.
+
+    This is the only write path into the collection other than `build_collection()`, deliberately -
+    keeping every write in this module means CLAUDE.md rule 22 ("Never allow Evaluation Set
+    incidents into RAG memory") is enforced in exactly one place. Three checks, all fail-closed,
+    all *before* anything is embedded or written:
+
+    1. The new ID must carry `config.PIPELINE_RUN_ID_PREFIX`, so a caller can never write under a
+       raw Memory/Evaluation incident ID (accidentally or otherwise).
+    2. If this run came from a known dataset incident (`metadata["source_incident_id"]`), that
+       source ID must not be an Evaluation incident. This is the check that actually matters
+       during Week 12: replaying Evaluation incidents through the pipeline must never teach the
+       retrieval memory about them.
+    3. If a source ID is present but the Evaluation file cannot be read, the write is REFUSED
+       rather than allowed. An unreadable Evaluation file makes check 2 unanswerable, and
+       `ingest.read_jsonl` returns `[]` for a missing file - which would otherwise turn "I cannot
+       check" into a silent "nothing to check".
+    """
+    if not incident_id.startswith(config.PIPELINE_RUN_ID_PREFIX):
+        raise EvaluationLeakageError(
+            f"Refusing to write incident_id={incident_id!r}: feedback write-back may only add IDs "
+            f"prefixed with {config.PIPELINE_RUN_ID_PREFIX!r}."
+        )
+
+    source_incident_id = metadata.get("source_incident_id")
+    if source_incident_id:
+        if not config.EVALUATION_INCIDENTS_FILE.exists():
+            raise EvaluationLeakageError(
+                f"Refusing to write a pipeline-run incident derived from source incident "
+                f"{source_incident_id!r}: the Evaluation set file "
+                f"({config.EVALUATION_INCIDENTS_FILE}) does not exist, so it cannot be proven that "
+                f"this is not an Evaluation incident."
+            )
+        if source_incident_id in _load_evaluation_ids_for_leakage_check():
+            raise EvaluationLeakageError(
+                f"Refusing to write a pipeline-run incident derived from Evaluation incident "
+                f"{source_incident_id!r} - Evaluation incidents must never enter RAG memory "
+                f"(CLAUDE.md rule 22)."
+            )
+
+    client = get_client()
+    collection = client.get_or_create_collection(name=config.CHROMA_COLLECTION_NAME)
+    collection.add(ids=[incident_id], documents=[postmortem_text], metadatas=[metadata])
+    log.info("Wrote pipeline-run incident '%s' into collection '%s'", incident_id, config.CHROMA_COLLECTION_NAME)
+
+
 def validate_no_leakage() -> bool:
     """Standalone validation entry point - re-runs the same leakage check against whatever
     collection currently exists on disk, without rebuilding it. Returns True if clean."""
@@ -115,11 +163,20 @@ def validate_no_leakage() -> bool:
 
     memory_ids = {inc["incident_id"] for inc in _load_memory_incidents()}
     all_indexed_ids = set(collection.get()["ids"])
-    extra = all_indexed_ids - memory_ids
+    # Week 10: incidents the pipeline itself learned are legitimately not in the Week 6 Memory
+    # file, but they are still not allowed to be Evaluation incidents - which the
+    # `_assert_no_evaluation_leakage` call above has already proven for the whole collection,
+    # and which `add_pipeline_run_incident` enforces at write time by source ID as well.
+    extra = {i for i in all_indexed_ids - memory_ids if not i.startswith(config.PIPELINE_RUN_ID_PREFIX)}
     if extra:
         raise EvaluationLeakageError(f"Collection contains IDs not present in the Memory set: {sorted(extra)}")
 
-    log.info("Leakage validation passed: %d indexed IDs, all in Memory set, none from Evaluation set", len(all_indexed_ids))
+    learned = sum(1 for i in all_indexed_ids if i.startswith(config.PIPELINE_RUN_ID_PREFIX))
+    log.info(
+        "Leakage validation passed: %d indexed IDs (%d Week 6 Memory seeds + %d learned pipeline "
+        "runs), none from the Evaluation set",
+        len(all_indexed_ids), len(all_indexed_ids) - learned, learned,
+    )
     return True
 
 

@@ -6,6 +6,9 @@ langgraph>=0.2
 chromadb>=0.5  # needed transitively: rag/retriever.py imports dataset_tools.chroma_store
 pydantic>=2.0  # already a transitive langgraph dependency; pinned explicitly since Week 8's
                # rca/rag/remediation models depend on it directly
+streamlit>=1.38  # Week 9: app.py's mandatory human-approval console
+kubernetes>=29.0  # Week 10: execution/kubernetes_client.py. Imported lazily inside methods, so
+                  # everything except an actual pod restart still works if it is absent.
 
 # test-only
 pytest>=8.0

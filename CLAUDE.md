@@ -25,7 +25,7 @@ incident set.
 ├── telemetry/        (added Week 5 - automated telemetry capture)
 ├── ai-orchestration/
 ├── dataset-tools/
-├── docs/
+├── docs/             (added Week 10 - Postman collection; the Weeks 1-2 deliverable)
 ├── k8s/
 ├── docker-compose.yml
 ├── README.md
@@ -125,6 +125,118 @@ The project uses a self-hosted local LLM via Ollama (initial candidate:
 `llama3.1:8b`). Do not design the system around OpenAI/Anthropic APIs.
 
 ## Current status
+
+Weeks 10-11 complete (2026-09-08): the pipeline now closes the loop and has a comparison arm.
+
+**Week 10.** `execution/` is the only code in this project that changes the running system, and
+every gate is re-checked immediately before acting rather than trusted from graph routing:
+`human_decision` must be exactly `"approved"`, `safety_check.passed` must be True (a human
+approval can never override a safety rejection), and the incident must not have exhausted
+`MAX_REMEDIATION_ATTEMPTS`. It can only ever do one of three things - POST a service's own fault
+reset (path read from Week 5's `telemetry.experiment.FAULTS`, so it cannot drift from what the
+Java services expose), delete a pod so its Deployment recreates it, or nothing - there is no
+generic command path, and the Kubernetes client refuses any service outside this project's four.
+`execution/verify.py` then re-observes the target's `/fault-status` and `/actuator/health` instead
+of trusting the remediation call's own 200, which is what makes Week 12's Recovery Success Rate
+measurable and makes False Recovery (`fault_still_active`) detectable at all. The failed-fix retry
+loop the Week 8 roadmap specified but could not build is now wired: it routes back to
+`propose_remediation` (not RCA), the proposer walks a deterministic ladder (targeted reset ->
+restart_service -> human escalation) that never re-proposes a category that already failed, a
+false recovery triggers a retry exactly like an outright failure, and **every retry re-enters the
+Safety Validator and raises a fresh interrupt - a new action never inherits the approval given for
+a different one**. This also made Week 9's ledger-service rule reachable in the real pipeline for
+the first time: a db-lock incident whose reset fails escalates to "restart ledger-service", which
+is high-risk on ledger-service, and is refused before any human is asked. `feedback/` writes the
+finished run back into ChromaDB in Week 6's postmortem prose format - honestly, including failures
+and rejections rather than rewriting them as successes. CLAUDE.md rule 22 is enforced twice
+independently (the writer refuses Evaluation incidents before building anything; `chroma_store`
+refuses again by source ID, refuses any non-`run-`-prefixed ID, and **fails closed when the
+Evaluation file cannot be read**, since `read_jsonl` returns `[]` for a missing file and would
+otherwise turn "cannot check" into "nothing to check"). MTTR is measured from detection to
+execution completion, with a negative interval dropped rather than recorded.
+
+**Week 11.** `baseline/` is a genuinely separate single-agent implementation - one prompt, one LLM
+call producing root cause and action together, importing nothing from `rca/`, `remediation/`, or
+`llm/interpret.py`. Everything that is not the diagnostic step is shared by importing the
+*identical node objects*, so the isolated variable is agent decomposition rather than retrieval or
+downstream safety; a test asserts node identity so the arms cannot drift apart later. Its failure
+modes are recorded rather than repaired (a hallucinated service or invented action becomes a
+countable `parse_issues` entry, and an invented action is coerced to something non-executable), it
+is subject to identical downstream rules, it deliberately has no deterministic fallback when Ollama
+is unavailable, and it does not retry - so Week 12 must compare one attempt per incident.
+
+**Gaps closed from earlier weeks:** the Postman collection specified in Weeks 1-2 but never created
+(now at `docs/postman/`, 31 requests covering the happy path, error paths, Actuator and all four
+faults), and the per-service Kubernetes/run READMEs specified in Week 3 item 7 (now present for all
+four Java services). `app.py` was also brought up to date - approving now genuinely executes, so
+the page says so explicitly, labels retries as retries, and shows execution, recovery verification,
+MTTR and feedback outcomes; it also gained a multi-agent/baseline arm selector.
+
+**A real finding, measured not assumed:** Isolation Forest **saturates** outside its training
+range. A swept measurement showed a 2 GB heap scoring identically to a 50 MB one (-0.0279 for every
+value above the training range), because every learned split threshold for that feature lies inside
+the observed range, so any value beyond it takes the same branch everywhere. This is a property of
+the algorithm plus this feature schema, so it affects the real per-service detectors too - it is a
+concrete mechanism for Week 7's empirically-documented "detection is inconsistent" limitation, and
+it sharpens it: extreme deviations are as invisible as moderate ones, for the same reason. It was
+characterised rather than tuned away; the response was to surface the already-documented,
+intentionally-configurable `ANOMALY_SCORE_THRESHOLD` knob in the console with the raw score always
+displayed. Important mitigation already in place: Week 8's deterministic signature matching does
+not share this weakness, so the *diagnosis* stays correct wherever detection fires - the
+deterministic layer compensating for the ML layer's blind spot is a result in favour of the
+multi-agent design and belongs in the paper's Discussion.
+
+81 new tests (182 in ai-orchestration, 249 across all three Python packages, 0 failures). Live
+verification again ran through a real `streamlit run app.py` browser session rather than a cluster
+(no Minikube on this machine) - which made for a *stronger* Week 10 test than a healthy cluster
+would have: with nothing listening on port 8082 and no cluster, every remediation genuinely failed,
+so the entire escalation ladder ran under real failure conditions. One live memory-leak incident
+produced three real execution attempts, three separate interrupt pauses and three separate Approve
+clicks, ending at the terminal escalation which correctly executed nothing; MTTR 53.4s. The
+feedback loop demonstrably closed - a later run retrieved incidents that earlier runs of the same
+pipeline had learned - and `validate_no_leakage()` passes against the real on-disk collection.
+Java tests were not re-run (no Maven on this machine). See `ai-orchestration/README.md`'s "Week 10
+architecture", "Week 11 architecture", "Live verification performed" and "Known limitations" for
+full detail. Waiting for explicit instruction to begin Week 12 (full evaluation run, all five
+metric categories).
+
+Week 9 complete (2026-09-02): `ai-orchestration/` adds a deterministic Safety Validator
+(`safety/validator.py`, zero AI/LLM/network calls) and a genuinely mandatory human-approval
+gate built on LangGraph's `interrupt()`/`Command(resume=...)` - the graph physically cannot
+proceed past `human_approval` without an external resume signal, per CLAUDE.md rule 21, not
+merely a documented convention. The Safety Validator runs first and independently re-checks
+every field of a `RemediationProposal` (not trusting Pydantic's own validation alone): a known
+whitelist of `action_category`/`target_service` values, and - implementing the roadmap's example
+rule directly - a hard rejection of any `risk_level="high"` proposal targeting `ledger-service`,
+since it holds financial transaction state behind Week 2's pessimistic-locking `@Transactional`
+boundary. A rejected proposal routes straight to `finalize` and never reaches a human at all
+(rule 20: "a rule violation shouldn't even reach the human"); a passed proposal pauses at
+`human_approval` until `app.py` (a new Streamlit console) or a test resumes it with an
+approve/reject decision, which is recorded verbatim in the final result and its `limitations`.
+`build_graph()` now always compiles with a checkpointer (`MemorySaver` by default, swappable),
+which meant every existing test call site needed a `thread_id` config - a real, mechanical
+consequence of making approval actually non-bypassable rather than just typed as mandatory.
+11 new tests pass (101 total in ai-orchestration, up from 90), including two new interrupt-cycle
+tests and one safety-rejection test (the latter monkeypatches the proposer, since the real Week 8
+templates never assign `risk_level="high"` today - a disclosed, not hidden, limitation). Fixing
+these tests also surfaced a real latent bug: two Week 8 test mocks left `ollama_client.model`
+unset, so a raw `MagicMock` silently flowed into checkpointed state - harmless before Week 9 (no
+serialization happened), a genuine `TypeError` once `MemorySaver` started really serializing
+state; fixed by setting the mock attributes explicitly. This machine has no live
+Kubernetes/Minikube deployment (unlike the Weeks 5-8 verification environment), so this week's
+live verification ran `streamlit run app.py` end-to-end in a real browser instead: trained a
+synthetic, clearly-labeled, in-memory-only demo detector from the UI, ran a memory-leak sample
+through to a real pause-and-Approve cycle (the typed approval reason round-tripped through
+`Command(resume=...)` and appeared verbatim in the final result), and a separate db-lock sample
+through a pause-and-Reject cycle. That db-lock run caught a real bug live: the demo detector's
+synthetic training data initially generated `ledger-service`'s HikariCP fields as fixed constants
+instead of jittered values, giving Isolation Forest a zero-variance feature it could never learn
+to split on, so the detector failed to flag an obvious real deviation - fixed in `app.py` (not
+the production package, which has always trained on naturally-varying real telemetry) and
+re-verified live. The safety-rejection branch was not exercised live (same reason as the test
+above) - disclosed explicitly rather than implied. See `ai-orchestration/README.md`'s "Week 9
+architecture" and "Live verification performed" for full detail. Waiting for explicit instruction
+to begin Week 10 (Kubernetes execution client, feedback write-back, full pipeline wiring).
 
 Week 8 complete (2026-08-28): `ai-orchestration/` extends Week 7's
 LangGraph workflow with an RCA agent, RAG retrieval, and a deterministic

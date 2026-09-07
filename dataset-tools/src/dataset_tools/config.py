@@ -26,6 +26,14 @@ SPLIT_MANIFEST_FILE = PROCESSED_DIR / "split_manifest.json"
 
 CHROMA_COLLECTION_NAME = "incident_memory"
 
+# Week 10 feedback write-back: incidents learned from real pipeline runs are added to the same
+# collection (so future retrievals can benefit from them, per the Week 10 roadmap's "learning"
+# step) but are always given this ID prefix. That keeps them trivially distinguishable from the
+# Week 6 seed Memory incidents in any audit, and lets chroma_store.validate_no_leakage() tell
+# "an ID that isn't in the Memory set because the pipeline learned it" apart from "an ID that
+# isn't in the Memory set because something leaked".
+PIPELINE_RUN_ID_PREFIX = "run-"
+
 # Deterministic split - documented, fixed seed. Changing this value changes the split; anyone
 # re-running build_dataset.py with this same seed reproduces the identical Memory/Evaluation
 # assignment.

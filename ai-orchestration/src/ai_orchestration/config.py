@@ -93,6 +93,44 @@ ISOLATION_FOREST_MAX_SAMPLES = os.environ.get("AI_ORCHESTRATION_IF_MAX_SAMPLES",
 # without retraining, per Week 7's "make anomaly thresholds configurable" requirement.
 ANOMALY_SCORE_THRESHOLD = float(os.environ.get("AI_ORCHESTRATION_ANOMALY_THRESHOLD", "0.0"))
 
+# --- Week 10: execution, recovery verification, feedback write-back ------------------------
+
+# Hard cap on how many remediation actions may be executed for one incident before the pipeline
+# escalates to a human and stops retrying (Week 8 roadmap: "Cap retries (e.g., 3) to avoid
+# infinite loops"). Counts *executed* attempts, not proposals.
+MAX_REMEDIATION_ATTEMPTS = int(os.environ.get("AI_ORCHESTRATION_MAX_REMEDIATION_ATTEMPTS", "3"))
+
+# LangGraph's own default is 25 supersteps, which the Week 10 retry loop can come uncomfortably
+# close to on a full three-attempt incident - see graph/workflow.py::default_run_config.
+GRAPH_RECURSION_LIMIT = int(os.environ.get("AI_ORCHESTRATION_GRAPH_RECURSION_LIMIT", "60"))
+
+# When true, the executor resolves and logs exactly what it *would* do and returns a normal
+# ExecutionResult with `dry_run=True`, without issuing the HTTP reset call or touching Kubernetes.
+# Default false: an approved action is supposed to actually execute (that is the entire point of
+# Week 10), and execution is already gated behind the Safety Validator plus mandatory human
+# approval. Set to "true" to rehearse the pipeline against a live cluster without changing it.
+EXECUTION_DRY_RUN = os.environ.get("AI_ORCHESTRATION_EXECUTION_DRY_RUN", "false").lower() == "true"
+
+EXECUTION_HTTP_TIMEOUT_SECONDS = float(os.environ.get("AI_ORCHESTRATION_EXECUTION_HTTP_TIMEOUT_SECONDS", "10"))
+
+# Kubernetes namespace the four service Deployments live in (k8s/*.yaml apply to the current
+# namespace, which is "default" on a stock Minikube).
+KUBERNETES_NAMESPACE = os.environ.get("AI_ORCHESTRATION_KUBERNETES_NAMESPACE", "default")
+
+# Post-execution recovery verification: re-check the target service's own /fault-status and
+# /actuator/health after acting, rather than treating "the API call returned 200" as recovery.
+# This is what makes Week 12's Recovery Success Rate and False Recovery Rate measurable at all.
+RECOVERY_VERIFICATION_ATTEMPTS = int(os.environ.get("AI_ORCHESTRATION_RECOVERY_VERIFICATION_ATTEMPTS", "5"))
+RECOVERY_VERIFICATION_INTERVAL_SECONDS = float(
+    os.environ.get("AI_ORCHESTRATION_RECOVERY_VERIFICATION_INTERVAL_SECONDS", "3")
+)
+
+# Feedback write-back into ChromaDB. Disable during Week 12's evaluation runs so the retrieval
+# memory stays frozen and identical for both the multi-agent pipeline and the single-agent
+# baseline - otherwise earlier evaluation runs would change what later ones can retrieve, and the
+# comparison would not be reproducible.
+FEEDBACK_ENABLED = os.environ.get("AI_ORCHESTRATION_FEEDBACK_ENABLED", "true").lower() == "true"
+
 # --- Ollama ---------------------------------------------------------------------------------
 
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
