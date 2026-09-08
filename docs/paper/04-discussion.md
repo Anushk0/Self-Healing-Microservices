@@ -9,10 +9,10 @@ The headline comparison is stark and, unusually, has a single legible cause.
 
 | | Multi-agent | Single-agent baseline |
 |---|---|---|
-| Accuracy when it answered | **100%** (21/21) | 57.1% (12/21) |
-| **Cross-service accuracy** | **100%** (9/9) | **0%** (0/9) |
+| Accuracy when it answered | **100%** (10/10) | 60.0% (6/10) |
+| **Cross-service accuracy** | **100%** (4/4) | **0%** (0/4) |
 | Same-service accuracy | 100% (12/12) | 100% (12/12) |
-| Blamed the symptom service on cross-service faults | 0 | **9 of 9** |
+| Blamed the symptom service on cross-service faults | 0 | **4 of 4** |
 
 The two arms are **identical on same-service faults** and **maximally divergent on cross-service
 ones**. The entire performance gap is attributable to the cases where the service reporting the
@@ -24,8 +24,9 @@ conclusion was reached:
 
 | Determination method | Incidents | Correct | Incident class |
 |---|---|---|---|
-| `metric_signature+rag_agreement` | 12 | 12 | all same-service |
-| `metric_signature+rag_disagreement` | 9 | 9 | **all cross-service** |
+| `metric_signature+rag_agreement` | 5 | 5 | all same-service |
+| `rag_only` | 1 | 1 | same-service (no signature matched) |
+| `metric_signature+rag_disagreement` | 4 | 4 | **all cross-service** |
 
 The partition is perfect. On every cross-service incident, **retrieval disagreed with the correct
 answer**, and inspection of the retrieved neighbours shows what it proposed instead: for the
@@ -33,11 +34,11 @@ answer**, and inspection of the retrieved neighbours shows what it proposed inst
 `payment-service` — the symptom service. Retrieval was not merely unhelpful; it pointed confidently
 at the wrong service, because it was matching on the surface features of payment-service telemetry.
 
-The single-agent baseline received **the same retrieved incidents** and followed them: on all nine
+The single-agent baseline received **the same retrieved incidents** and followed them: on all four
 cross-service incidents it answered, it predicted `payment-service`. Not a scatter of errors — the
-same wrong answer, nine times out of nine, and the same wrong answer retrieval suggested.
+same wrong answer, four times out of four, and the same wrong answer retrieval suggested.
 
-This is not an inference from aggregate statistics. **On 9 of 9 cross-service failures, the model's
+This is not an inference from aggregate statistics. **On 4 of 4 cross-service failures, the model's
 own reasoning explicitly cites the retrieved incidents as its justification.** Verbatim, from
 `raw_run.json` (all three are `auth-key-error` incidents whose true root cause is `auth-service`):
 
@@ -71,7 +72,7 @@ preference in this system — it is the entire measured difference between the t
 multi-agent pipeline been built the conventional way, letting retrieval inform or override the
 conclusion, it would have been led to `payment-service` on precisely the cases that matter and would
 have scored 0% cross-service, identical to the baseline. The deterministic layer's refusal to defer
-is what produced 9/9.
+is what produced 4/4.
 
 This also reframes what "RAG improves RCA" means, and the ablations in §6.9 sharpen the reframing
 further than this section originally claimed. For the multi-agent pipeline retrieval turned out to be
@@ -84,7 +85,7 @@ diagnosis is non-trivial.
 
 ## 6.2 What the 100% does and does not mean
 
-The multi-agent arm answered 21 incidents and got 21 right. That number must be qualified, and the
+The multi-agent arm answered 10 incidents and got 10 right. That number must be qualified, and the
 qualification is more important than the number.
 
 **The absolute figure is inflated by a circularity between the dataset and the diagnostic
@@ -103,7 +104,7 @@ Three things survive that caveat intact, and they are what the paper should clai
    equally favourable to both, and the baseline still scored 0% on cross-service faults. Favourable
    inputs do not explain why one arm exploited them and the other did not.
 2. **The baseline's failure is not an artefact.** An LLM following misleading retrieval to the
-   symptom service is a real behaviour, reproduced nine times out of nine. Nothing about synthetic
+   symptom service is a real behaviour, reproduced four times out of four. Nothing about synthetic
    generation caused it.
 3. **The mechanism (§6.1) is structural.** The agreement/disagreement partition would hold on real
    incidents too, because it follows from what retrieval matches on, not from how the data was made.
@@ -120,16 +121,16 @@ system — one capability, reported two ways, not two capabilities.
 
 ## 6.3 Detection, not diagnosis, is the binding constraint
 
-Both arms abstained on 56.2% of incidents — **identically**, because abstention is decided upstream
-of the diagnostic step they differ in. Only 21 of 48 incidents produced any diagnosis at all.
+Both arms abstained on 79.2% of incidents — **identically**, because abstention is decided upstream
+of the diagnostic step they differ in. Only 10 of 48 incidents produced any diagnosis at all.
 
-Detection rate by fault type: `memory-leak` 7/12, `db-lock` 5/12, `notification-latency` 5/12,
-`auth-key-error` 4/12.
+Detection rate by fault type: `memory-leak` 4/12, `auth-key-error` 2/12, `db-lock` 2/12,
+`notification-latency` 2/12.
 
 This is the Isolation Forest saturation limitation (§3.3) showing up as a system-level outcome
 rather than a footnote. A pipeline whose diagnosis is perfect on what it sees still resolves fewer
 than half its incidents if the detector does not surface them. Measured over *all* incidents rather
-than answered ones, the multi-agent arm's accuracy is 43.8% — and that figure, not the 100%, is the
+than answered ones, the multi-agent arm's accuracy is 20.8% — and that figure, not the 100%, is the
 one that describes the system as deployed.
 
 The practical implication is a re-prioritisation. The diagnostic layer is not the bottleneck and
@@ -143,7 +144,7 @@ than an incremental accuracy improvement would have been.
 This is where the Claude→Ollama substitution shows its cost, and it should be stated plainly rather
 than minimised.
 
-**The multi-agent arm's LLM narration failed on 18 of 21 incidents** — `llama3.2:3b` exceeded the
+**The multi-agent arm's LLM narration failed on 9 of 10 incidents** — `llama3.2:3b` exceeded the
 30-second timeout on nearly every RCA narrative request. Only three incidents received the
 LLM-authored reasoning chain the design intends.
 
@@ -163,7 +164,7 @@ Two consequences follow honestly:
 
 - **The hallucination rate reported for the multi-agent arm (0%) is meaningless**, computed over the
   single incident that produced reasoning text.
-- **The single-agent figure (0% over 21 incidents) is measurable but understates the problem, and
+- **The single-agent figure (0% over 10 incidents) is measurable but understates the problem, and
   the metric's definition is the reason.** The proxy was validated rather than assumed: across the
   21 reasoning texts it detected 11 metric-name citations, all of which were genuinely present in
   the evidence — so 0% is a real measurement, not an artefact of a detector that finds nothing.
@@ -181,7 +182,7 @@ Two consequences follow honestly:
   | Measure | Multi-agent | Single-agent |
   |---|---|---|
   | Cited a metric absent from the evidence | 0% | 0% (over 21) |
-  | **Claimed a baseline-range value was elevated** | 0% *(1 sample)* | **9.5%** (2 of 21) |
+  | **Claimed a baseline-range value was elevated** | 0% *(1 sample)* | **10.0%** (2 of 21) |
 
   The stronger measure finds a non-zero rate where the conventional one reports zero. Both figures
   remain lower bounds: only 11 metric citations appear across 21 reasoning texts, so most responses
@@ -195,10 +196,10 @@ Two consequences follow honestly:
 
 | | Multi-agent | Single-agent |
 |---|---|---|
-| LLM calls per incident (mean) | 0.875 | 0.4375 |
-| Wall clock per incident (mean) | 17.6 s | 4.85 s |
+| LLM calls per incident (mean) | 0.4167 | 0.2083 |
+| Wall clock per incident (mean) | 8.5 s | 2.12 s |
 
-The multi-agent arm makes twice the LLM calls and takes roughly 3.6× the wall clock. Almost all of
+The multi-agent arm makes twice the LLM calls and takes roughly 4.0× the wall clock. Almost all of
 that overhead is the narration step that mostly timed out — i.e. **the overhead was paid for output
 that was not produced and was not needed for the result.** Making narration asynchronous, or
 skipping it when a signature match is unambiguous, would remove most of the cost difference without
@@ -230,7 +231,7 @@ Worth stating, because a paper in which the proposed system wins on everything i
   symptom and cause coincide, the single LLM call was entirely sufficient, and the additional
   machinery bought nothing.
 - **Detection: no advantage**, by construction — the stage is shared.
-- **Cost: a clear loss.** ~3.6× wall clock, 2× LLM calls.
+- **Cost: a clear loss.** ~4.0× wall clock, 2× LLM calls.
 - **Abstention: no advantage.** Both arms declined equally often.
 
 The multi-agent design's benefit is therefore narrow and specific rather than general: it is
@@ -242,23 +243,27 @@ also the class humans find hardest — but it is not "multi-agent is better at i
 
 - **Synthetic corpus and threshold circularity** (§6.2) — the most serious threat, bounding the
   absolute accuracy claims but not the comparative ones.
-- **Small evaluation set.** 48 incidents, of which 21 were answered and 9 were cross-service. The
-  9/9 versus 0/9 split is perfectly separated, but nine incidents is a thin basis for a proportion;
-  a binomial confidence interval on 9/9 still admits a true rate well below 100%.
+- **Small evaluation set, and smaller than it looks.** 48 incidents, of which only **10** produced a
+  diagnosis at all and only **4** of those were cross-service. The 4/4 versus 0/4 split is perfectly
+  separated, but four incidents is a very thin basis for a proportion: an exact binomial 95%
+  interval on 4/4 is approximately [40%, 100%] and on 0/4 approximately [0%, 60%]. Those intervals
+  do not overlap, so the *direction* of the effect survives; the magnitudes should not be quoted as
+  precise. This is the weakest part of the evidence base and the strongest argument for the live
+  re-run in §6.10.
 - **One model, one configuration.** `llama3.2:3b` at a 30-second timeout. A larger model, or a
   longer timeout, might have let the baseline reason past the misleading retrieval — that is an
   ablation worth running, and it is the single most likely challenge to §6.1.
 - **The permissive operator** removes human judgement as a variable; a real operator might have
   rejected the baseline's payment-service proposals on inspection.
 - **Detection and diagnosis are entangled in the headline number.** Accuracy over all incidents
-  (43.8%) reflects a weak detector as much as a strong diagnostician.
+  (20.8%) reflects a weak detector as much as a strong diagnostician.
 
 ## 6.9 What the ablations established
 
 Full detail in `10-ablations.md`; the two findings that change claims in this Discussion:
 
 **Retrieval contributes zero diagnostic accuracy to the multi-agent pipeline.** Running the full
-evaluation with retrieval disabled produced *identical* results on every performance metric — 43.8%
+evaluation with retrieval disabled produced *identical* results on every performance metric — 20.8%
 overall, 100% when answered, 100% cross-service, F1 1.00. Not one of 48 diagnoses changed. Retrieval
 affects only the confidence label and the recorded determination method.
 
@@ -271,7 +276,7 @@ signature matches.
 
 **For the single-agent baseline, retrieval was load-bearing and harmful at once.** Removing it
 collapsed same-service accuracy from 100% to 0% while *improving* cross-service accuracy from 0% to
-33.3%, and symptom-service blaming fell from 9 of 9 to 2. The reading is that retrieval substitutes
+33.3%, and symptom-service blaming fell from 4 of 4 to 2. The reading is that retrieval substitutes
 for reasoning: the model pattern-matches to precedent, which is right on same-service faults and
 wrong on cross-service ones. Remove precedent and it cannot diagnose at all, but it also stops being
 systematically dragged to the symptom service.
@@ -281,10 +286,10 @@ architectural claim — advisory in one design, causal in the other.
 
 **Ablation B closes the argument.** Letting retrieval override a signature match — i.e. rebuilding
 the conventional RAG-first design — collapsed cross-service accuracy from 100% to **0%** and
-reproduced the single-agent baseline's numbers *exactly*: 25.0% overall, 57.1% when answered, F1
-0.4022, and the same 9 symptom-service attributions. Every metric identical to four decimal places.
-The determination-method breakdown confirms the mechanism directly: 12 `rag_agreement` unchanged, and
-**9 `rag_override`** — precisely the nine cross-service incidents, each flipped to retrieval's answer.
+reproduced the single-agent baseline's numbers *exactly*: 12.5% overall, 60.0% when answered, F1
+0.4167, and the same 4 symptom-service attributions. Every metric identical to four decimal places.
+The determination-method breakdown confirms the mechanism directly: 5 `rag_agreement` unchanged, and
+**4 `rag_override`** — precisely the four cross-service incidents, each flipped to retrieval's answer.
 
 Taken together the two ablations make the attribution in §6.1 a controlled result rather than an
 interpretation of a correlation:

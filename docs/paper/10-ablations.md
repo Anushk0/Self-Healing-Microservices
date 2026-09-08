@@ -22,13 +22,32 @@ and any result carrying `determination_method="rag_override"` came from an ablat
 
 | Metric | Multi-agent | Multi-agent *no RAG* | Single-agent | Single-agent *no RAG* |
 |---|---|---|---|---|
-| Accuracy (all incidents) | 43.8% | **43.8%** | 25.0% | **6.3%** |
-| Accuracy (when answered) | 100% | **100%** | 57.1% | **15.8%** |
+| Accuracy (all incidents) | 20.8% | **20.8%** | 12.5% | **6.3%** |
+| Accuracy (when answered) | 100% | **100%** | 60.0% | **15.8%** |
 | **Cross-service accuracy** | 100% | **100%** | 0% | **33.3%** |
 | **Same-service accuracy** | 100% | **100%** | 100% | **0%** |
 | Blamed the symptom service | 0 | **0** | 9 | **2** |
 | F1 (macro) | 1.00 | **1.00** | 0.40 | **0.09** |
 | Incidents answered | 21 | 21 | 21 | 19 |
+
+### Finding A0 — one incident where "identical score" hides a changed mechanism
+
+Reported first because it qualifies everything below. All 48 predictions are identical with and
+without retrieval, but the *paths* differ on ten of them, and one is not a coincidence-free match:
+
+| Incident | With retrieval | Without retrieval | Predicted | Correct |
+|---|---|---|---|---|
+| `inc-0038` | `rag_only` | `fallback_unknown` | payment-service | ✅ both |
+
+On `inc-0038` no signature matched, so with retrieval the answer came from the closest retrieved
+incident, and without it the pipeline fell back to naming the symptom service. Both produced
+`payment-service` — but only because this is a **same-service** fault, where the fallback's default
+*is* the right answer. Retrieval genuinely contributed the diagnosis in the shipped configuration;
+the ablation scored the same by luck, not by equivalence.
+
+The other nine changed only their `determination_method` label (`+rag_agreement` /
+`+rag_disagreement` → plain `metric_signature`), with the signature match supplying the answer in
+both configurations. So A1 below is a claim about *scores*, not about reasoning being unchanged.
 
 ### Finding A1 — retrieval is diagnostically inert for the multi-agent pipeline
 
@@ -57,8 +76,8 @@ The baseline's numbers move dramatically, and in opposite directions:
 
 - **Same-service accuracy collapses from 100% to 0%.**
 - **Cross-service accuracy improves from 0% to 33.3%.**
-- Symptom-service blaming falls from 9 of 9 to 2.
-- Overall accuracy falls from 57.1% to 15.8% when answered.
+- Symptom-service blaming falls from 4 of 4 to 2.
+- Overall accuracy falls from 60.0% to 15.8% when answered.
 
 The coherent reading is that **retrieval was substituting for reasoning.** With precedent available,
 the model pattern-matches to it: that is exactly right on same-service faults (where the retrieved
@@ -80,7 +99,7 @@ by construction, so removing it changes confidence labels; in the single-agent b
 ## 10.3 Ablation B — letting retrieval override the signature match
 
 The prediction registered before this run: because retrieval disagreed with the correct answer on all
-nine cross-service incidents and proposed `payment-service` each time, allowing it to win those
+four cross-service incidents and proposed `payment-service` each time, allowing it to win those
 disagreements should collapse cross-service accuracy from 100% toward 0%, while leaving the twelve
 same-service incidents untouched (retrieval already agrees there, so there is nothing to override).
 
@@ -88,20 +107,20 @@ same-service incidents untouched (retrieval already agrees there, so there is no
 
 | Metric | Multi-agent (shipped) | Multi-agent **+ override** | Single-agent baseline |
 |---|---|---|---|
-| Accuracy (all incidents) | 43.8% | **25.0%** | **25.0%** |
-| Accuracy (when answered) | 100% | **57.1%** | **57.1%** |
+| Accuracy (all incidents) | 20.8% | **12.5%** | **12.5%** |
+| Accuracy (when answered) | 100% | **60.0%** | **60.0%** |
 | **Cross-service accuracy** | 100% | **0%** | **0%** |
 | Same-service accuracy | 100% | 100% | 100% |
 | Blamed the symptom service | 0 | **9** | **9** |
-| F1 (macro) | 1.00 | **0.4022** | **0.4022** |
+| F1 (macro) | 1.00 | **0.4167** | **0.4167** |
 | Incidents answered | 21 | 21 | 21 |
 
 ### Finding B1 — removing the constraint reproduces the baseline *exactly*
 
 Not approximately. **Every metric in the override column equals the single-agent baseline's value**,
-to four decimal places, including the F1 macro (0.4022) and the count of symptom-service
-attributions (9). The determination-method breakdown shows why: 12 `rag_agreement` (unchanged) and
-**9 `rag_override`** — precisely the nine cross-service incidents, each flipped to retrieval's
+to four decimal places, including the F1 macro (0.4167) and the count of symptom-service
+attributions (9). The determination-method breakdown shows why: 5 `rag_agreement` (unchanged) and
+**4 `rag_override`** — precisely the four cross-service incidents, each flipped to retrieval's
 answer.
 
 The multi-agent pipeline retains, under this ablation, everything that distinguishes it: per-service
@@ -127,10 +146,10 @@ system that is right on every cross-service incident and one that is wrong on al
 
 ### Caveats on B
 
-- The 9/9-to-0/9 flip is clean but rests on nine incidents; §6.8's binomial caution applies equally
+- The 4/4-to-0/4 flip is clean but rests on four incidents; §6.8's binomial caution applies equally
   here.
 - The override policy implemented is majority-vote-by-`fault_type` among retrieved neighbours. A
-  more sophisticated fusion (distance weighting, confidence-aware blending) might not lose all nine.
+  more sophisticated fusion (distance weighting, confidence-aware blending) might not lose all four.
   What this ablation establishes is that the *naive* form of "let retrieval inform the conclusion" —
   the common one — is catastrophic on cross-service faults, not that every possible fusion is.
 - Both ablations inherit the synthetic-corpus circularity of §6.2. The mechanism should transfer,
@@ -155,9 +174,9 @@ system that is right on every cross-service incident and one that is wrong on al
 
 - **A fifth service / Istio traffic shifting** (roadmap Week 16 item 2). Not attempted. It requires
   a live cluster, which this machine does not have, and — more importantly — the evidence points
-  elsewhere: detection surfaced only 43.8% of incidents (§6.3), so adding services would add scope
+  elsewhere: detection surfaced only 20.8% of incidents (§6.3), so adding services would add scope
   without addressing the measured bottleneck. Recorded as a decision, not an omission.
 - **Varying the baseline's model.** The most valuable remaining experiment (§6.10 item 3) and the
   strongest objection to the headline result. Not run here because it needs a larger model than this
-  machine can serve at acceptable latency — `llama3.2:3b` already timed out on 18 of 21 narration
+  machine can serve at acceptable latency — `llama3.2:3b` already timed out on 9 of 10 narration
   requests at 30 s.

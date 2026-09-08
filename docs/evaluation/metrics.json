@@ -1,7 +1,7 @@
 {
   "run": {
-    "started_at": "2026-09-08T04:44:34.377394+00:00",
-    "finished_at": "2026-09-08T05:02:36.317266+00:00",
+    "started_at": "2026-09-08T15:45:13.057605+00:00",
+    "finished_at": "2026-09-08T15:53:47.787249+00:00",
     "mode": "replay",
     "operator_policy": "permissive",
     "arms": [
@@ -25,91 +25,38 @@
     "feedback_enabled": false,
     "anomaly_score_threshold": 0.0,
     "max_remediation_attempts": 3,
+    "retrieval_enabled": true,
+    "rag_may_override_signature": false,
+    "ablation": "none",
     "recovery_metrics_measurable": false,
     "recovery_metrics_note": "Recovery Success Rate and False Recovery Rate require a genuinely active fault to remediate. In replay mode nothing is executed (dry run), so they are not measurable and are reported as such rather than as a meaningless 100%.",
     "operator_decisions": [
       {
-        "incident_id": "inc-0005",
+        "incident_id": "inc-0011",
         "decision": "approved",
         "action_category": "restore_configuration",
         "target_service": "auth-service",
         "risk_level": "medium"
       },
       {
-        "incident_id": "inc-0005",
+        "incident_id": "inc-0011",
         "decision": "approved",
         "action_category": "restart_service",
         "target_service": "payment-service",
         "risk_level": "high"
       },
       {
-        "incident_id": "inc-0002",
+        "incident_id": "inc-0010",
         "decision": "approved",
         "action_category": "restore_configuration",
         "target_service": "auth-service",
         "risk_level": "medium"
       },
       {
-        "incident_id": "inc-0002",
+        "incident_id": "inc-0010",
         "decision": "approved",
         "action_category": "release_resources",
         "target_service": "payment-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0015",
-        "decision": "approved",
-        "action_category": "restore_configuration",
-        "target_service": "auth-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0015",
-        "decision": "approved",
-        "action_category": "release_resources",
-        "target_service": "payment-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0013",
-        "decision": "approved",
-        "action_category": "restore_configuration",
-        "target_service": "auth-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0013",
-        "decision": "approved",
-        "action_category": "release_resources",
-        "target_service": "payment-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0019",
-        "decision": "approved",
-        "action_category": "release_resources",
-        "target_service": "ledger-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0019",
-        "decision": "approved",
-        "action_category": "release_resources",
-        "target_service": "ledger-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0034",
-        "decision": "approved",
-        "action_category": "release_resources",
-        "target_service": "ledger-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0034",
-        "decision": "approved",
-        "action_category": "release_resources",
-        "target_service": "ledger-service",
         "risk_level": "medium"
       },
       {
@@ -121,20 +68,6 @@
       },
       {
         "incident_id": "inc-0026",
-        "decision": "approved",
-        "action_category": "release_resources",
-        "target_service": "ledger-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0028",
-        "decision": "approved",
-        "action_category": "release_resources",
-        "target_service": "ledger-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0028",
         "decision": "approved",
         "action_category": "release_resources",
         "target_service": "ledger-service",
@@ -164,20 +97,6 @@
       {
         "incident_id": "inc-0036",
         "decision": "approved",
-        "action_category": "release_resources",
-        "target_service": "payment-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0041",
-        "decision": "approved",
-        "action_category": "reset_fault_configuration",
-        "target_service": "payment-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0041",
-        "decision": "approved",
         "action_category": "restart_service",
         "target_service": "payment-service",
         "risk_level": "high"
@@ -192,61 +111,33 @@
       {
         "incident_id": "inc-0051",
         "decision": "approved",
+        "action_category": "restart_service",
+        "target_service": "payment-service",
+        "risk_level": "high"
+      },
+      {
+        "incident_id": "inc-0048",
+        "decision": "approved",
+        "action_category": "reset_fault_configuration",
+        "target_service": "payment-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0048",
+        "decision": "approved",
         "action_category": "release_resources",
         "target_service": "payment-service",
         "risk_level": "medium"
       },
       {
-        "incident_id": "inc-0045",
+        "incident_id": "inc-0038",
         "decision": "approved",
-        "action_category": "reset_fault_configuration",
+        "action_category": "investigate_manually",
         "target_service": "payment-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0045",
-        "decision": "approved",
-        "action_category": "restart_service",
-        "target_service": "payment-service",
-        "risk_level": "high"
-      },
-      {
-        "incident_id": "inc-0035",
-        "decision": "approved",
-        "action_category": "reset_fault_configuration",
-        "target_service": "payment-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0035",
-        "decision": "approved",
-        "action_category": "restart_service",
-        "target_service": "payment-service",
-        "risk_level": "high"
+        "risk_level": "low"
       },
       {
         "incident_id": "inc-0038",
-        "decision": "approved",
-        "action_category": "reset_fault_configuration",
-        "target_service": "payment-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0038",
-        "decision": "approved",
-        "action_category": "reset_fault_configuration",
-        "target_service": "payment-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0047",
-        "decision": "approved",
-        "action_category": "reset_fault_configuration",
-        "target_service": "payment-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0047",
         "decision": "approved",
         "action_category": "release_resources",
         "target_service": "payment-service",
@@ -262,65 +153,23 @@
       {
         "incident_id": "inc-0067",
         "decision": "approved",
-        "action_category": "release_resources",
-        "target_service": "payment-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0065",
-        "decision": "approved",
-        "action_category": "reset_fault_configuration",
-        "target_service": "notification-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0065",
-        "decision": "approved",
-        "action_category": "release_resources",
-        "target_service": "payment-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0053",
-        "decision": "approved",
-        "action_category": "reset_fault_configuration",
-        "target_service": "notification-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0053",
-        "decision": "approved",
-        "action_category": "release_resources",
-        "target_service": "payment-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0061",
-        "decision": "approved",
-        "action_category": "reset_fault_configuration",
-        "target_service": "notification-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0061",
-        "decision": "approved",
-        "action_category": "release_resources",
-        "target_service": "payment-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0052",
-        "decision": "approved",
-        "action_category": "reset_fault_configuration",
-        "target_service": "notification-service",
-        "risk_level": "medium"
-      },
-      {
-        "incident_id": "inc-0052",
-        "decision": "approved",
         "action_category": "restart_service",
         "target_service": "payment-service",
         "risk_level": "high"
+      },
+      {
+        "incident_id": "inc-0065",
+        "decision": "approved",
+        "action_category": "reset_fault_configuration",
+        "target_service": "notification-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0065",
+        "decision": "approved",
+        "action_category": "release_resources",
+        "target_service": "payment-service",
+        "risk_level": "medium"
       }
     ]
   },
@@ -348,11 +197,11 @@
     "multi_agent": {
       "performance": {
         "incidents_total": 48,
-        "answered": 21,
-        "abstained": 27,
+        "answered": 10,
+        "abstained": 38,
         "errored": 0,
-        "abstention_rate": 0.5625,
-        "accuracy_over_all_incidents": 0.4375,
+        "abstention_rate": 0.7917,
+        "accuracy_over_all_incidents": 0.2083,
         "accuracy_when_answered": 1.0,
         "precision_macro": 1.0,
         "recall_macro": 1.0,
@@ -363,38 +212,38 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1-score": 1.0,
-            "support": 4.0
+            "support": 2.0
           },
           "ledger-service": {
             "precision": 1.0,
             "recall": 1.0,
             "f1-score": 1.0,
-            "support": 5.0
+            "support": 2.0
           },
           "notification-service": {
             "precision": 1.0,
             "recall": 1.0,
             "f1-score": 1.0,
-            "support": 5.0
+            "support": 2.0
           },
           "payment-service": {
             "precision": 1.0,
             "recall": 1.0,
             "f1-score": 1.0,
-            "support": 7.0
+            "support": 4.0
           },
           "accuracy": 1.0,
           "macro avg": {
             "precision": 1.0,
             "recall": 1.0,
             "f1-score": 1.0,
-            "support": 21.0
+            "support": 10.0
           },
           "weighted avg": {
             "precision": 1.0,
             "recall": 1.0,
             "f1-score": 1.0,
-            "support": 21.0
+            "support": 10.0
           }
         },
         "labels": [
@@ -405,14 +254,14 @@
         ],
         "cross_service_accuracy": 1.0,
         "same_service_accuracy": 1.0,
-        "cross_service_count": 9,
+        "cross_service_count": 4,
         "blamed_symptom_service_on_cross_service_incidents": 0
       },
       "system": {
-        "detection_latency_seconds_mean": 0.0115,
-        "detection_latency_seconds_median": 0.010561,
-        "time_to_first_pause_seconds_mean": 17.5851,
-        "anomaly_detection_rate": 0.4375,
+        "detection_latency_seconds_mean": 0.0061,
+        "detection_latency_seconds_median": 0.005216,
+        "time_to_first_pause_seconds_mean": 8.5249,
+        "anomaly_detection_rate": 0.2083,
         "mttr_seconds_mean": null,
         "mttr_note": "Not measurable in replay mode: a replayed incident has no active fault, so nothing was executed (dry run) and there is no remediation outcome to verify. Requires mode='live'.",
         "executions_attempted": 0,
@@ -420,25 +269,25 @@
         "recovery_success_note": "Not measurable in replay mode: a replayed incident has no active fault, so nothing was executed (dry run) and there is no remediation outcome to verify. Requires mode='live'.",
         "false_recovery_rate": null,
         "false_recovery_note": "Not measurable in replay mode: a replayed incident has no active fault, so nothing was executed (dry run) and there is no remediation outcome to verify. Requires mode='live'.",
-        "remediation_attempts_mean": 0.4375
+        "remediation_attempts_mean": 0.1875
       },
       "ai": {
         "unsupported_significance_rate": 0.0,
         "incidents_with_unsupported_significance_claims": 0,
         "unsupported_significance_note": "Cited a real metric value that lies inside its documented baseline range while describing it as elevated. Catches fabricated *significance*, which the metric-name check below cannot - and which is the failure mode that actually produced wrong diagnoses in this run.",
-        "wall_clock_seconds_per_incident_mean": 17.5888,
-        "llm_calls_per_incident_mean": 0.875,
-        "llm_calls_total": 42,
+        "wall_clock_seconds_per_incident_mean": 8.5266,
+        "llm_calls_per_incident_mean": 0.4167,
+        "llm_calls_total": 20,
         "token_cost_substitution_note": "Token cost is not applicable to a self-hosted Ollama model; wall-clock inference time and LLM call count are reported in its place (documented methodology substitution).",
-        "incidents_with_reasoning_text": 3,
+        "incidents_with_reasoning_text": 1,
         "hallucination_rate": 0.0,
         "hallucination_note": "Automated proxy: a reasoning chain citing a known metric name that was absent from the evidence given to it. Conservative by construction - unrecognised tokens are ignored, so this is a lower bound, and it does not attempt to judge semantic correctness.",
         "incidents_with_parse_issues": 0,
         "parse_issue_rate": 0.0
       },
       "human": {
-        "incidents_reaching_human_approval": 21,
-        "approved": 21,
+        "incidents_reaching_human_approval": 10,
+        "approved": 10,
         "rejected": 0,
         "approval_accuracy": 1.0,
         "approval_accuracy_note": "Under the 'permissive' simulated-operator policy this is definitionally equal to diagnostic accuracy among proposals that reached approval, so it is not an independent measurement. Reported for completeness and because it makes Unsafe Action Prevention interpretable - see evaluation/operator.py.",
@@ -451,53 +300,53 @@
     "single_agent": {
       "performance": {
         "incidents_total": 48,
-        "answered": 21,
-        "abstained": 27,
+        "answered": 10,
+        "abstained": 38,
         "errored": 0,
-        "abstention_rate": 0.5625,
-        "accuracy_over_all_incidents": 0.25,
-        "accuracy_when_answered": 0.5714,
-        "precision_macro": 0.3594,
+        "abstention_rate": 0.7917,
+        "accuracy_over_all_incidents": 0.125,
+        "accuracy_when_answered": 0.6,
+        "precision_macro": 0.375,
         "recall_macro": 0.5,
-        "f1_macro": 0.4022,
-        "fault_type_accuracy_when_answered": 0.5714,
+        "f1_macro": 0.4167,
+        "fault_type_accuracy_when_answered": 0.6,
         "per_class": {
           "auth-service": {
             "precision": 0.0,
             "recall": 0.0,
             "f1-score": 0.0,
-            "support": 4.0
+            "support": 2.0
           },
           "ledger-service": {
             "precision": 1.0,
             "recall": 1.0,
             "f1-score": 1.0,
-            "support": 5.0
+            "support": 2.0
           },
           "notification-service": {
             "precision": 0.0,
             "recall": 0.0,
             "f1-score": 0.0,
-            "support": 5.0
+            "support": 2.0
           },
           "payment-service": {
-            "precision": 0.4375,
+            "precision": 0.5,
             "recall": 1.0,
-            "f1-score": 0.6086956521739131,
-            "support": 7.0
+            "f1-score": 0.6666666666666666,
+            "support": 4.0
           },
-          "accuracy": 0.5714285714285714,
+          "accuracy": 0.6,
           "macro avg": {
-            "precision": 0.359375,
+            "precision": 0.375,
             "recall": 0.5,
-            "f1-score": 0.40217391304347827,
-            "support": 21.0
+            "f1-score": 0.41666666666666663,
+            "support": 10.0
           },
           "weighted avg": {
-            "precision": 0.38392857142857145,
-            "recall": 0.5714285714285714,
-            "f1-score": 0.4409937888198757,
-            "support": 21.0
+            "precision": 0.4,
+            "recall": 0.6,
+            "f1-score": 0.4666666666666666,
+            "support": 10.0
           }
         },
         "labels": [
@@ -508,14 +357,14 @@
         ],
         "cross_service_accuracy": 0.0,
         "same_service_accuracy": 1.0,
-        "cross_service_count": 9,
-        "blamed_symptom_service_on_cross_service_incidents": 9
+        "cross_service_count": 4,
+        "blamed_symptom_service_on_cross_service_incidents": 4
       },
       "system": {
-        "detection_latency_seconds_mean": 0.0115,
-        "detection_latency_seconds_median": 0.010561,
-        "time_to_first_pause_seconds_mean": 4.8458,
-        "anomaly_detection_rate": 0.4375,
+        "detection_latency_seconds_mean": 0.0061,
+        "detection_latency_seconds_median": 0.005216,
+        "time_to_first_pause_seconds_mean": 2.1213,
+        "anomaly_detection_rate": 0.2083,
         "mttr_seconds_mean": null,
         "mttr_note": "Not measurable in replay mode: a replayed incident has no active fault, so nothing was executed (dry run) and there is no remediation outcome to verify. Requires mode='live'.",
         "executions_attempted": 0,
@@ -523,27 +372,27 @@
         "recovery_success_note": "Not measurable in replay mode: a replayed incident has no active fault, so nothing was executed (dry run) and there is no remediation outcome to verify. Requires mode='live'.",
         "false_recovery_rate": null,
         "false_recovery_note": "Not measurable in replay mode: a replayed incident has no active fault, so nothing was executed (dry run) and there is no remediation outcome to verify. Requires mode='live'.",
-        "remediation_attempts_mean": 0.4375
+        "remediation_attempts_mean": 0.2083
       },
       "ai": {
-        "unsupported_significance_rate": 0.0952,
-        "incidents_with_unsupported_significance_claims": 2,
+        "unsupported_significance_rate": 0.1,
+        "incidents_with_unsupported_significance_claims": 1,
         "unsupported_significance_note": "Cited a real metric value that lies inside its documented baseline range while describing it as elevated. Catches fabricated *significance*, which the metric-name check below cannot - and which is the failure mode that actually produced wrong diagnoses in this run.",
-        "wall_clock_seconds_per_incident_mean": 4.8503,
-        "llm_calls_per_incident_mean": 0.4375,
-        "llm_calls_total": 21,
+        "wall_clock_seconds_per_incident_mean": 2.1226,
+        "llm_calls_per_incident_mean": 0.2083,
+        "llm_calls_total": 10,
         "token_cost_substitution_note": "Token cost is not applicable to a self-hosted Ollama model; wall-clock inference time and LLM call count are reported in its place (documented methodology substitution).",
-        "incidents_with_reasoning_text": 21,
+        "incidents_with_reasoning_text": 10,
         "hallucination_rate": 0.0,
         "hallucination_note": "Automated proxy: a reasoning chain citing a known metric name that was absent from the evidence given to it. Conservative by construction - unrecognised tokens are ignored, so this is a lower bound, and it does not attempt to judge semantic correctness.",
         "incidents_with_parse_issues": 0,
         "parse_issue_rate": 0.0
       },
       "human": {
-        "incidents_reaching_human_approval": 21,
-        "approved": 21,
+        "incidents_reaching_human_approval": 10,
+        "approved": 10,
         "rejected": 0,
-        "approval_accuracy": 0.5714,
+        "approval_accuracy": 0.6,
         "approval_accuracy_note": "Under the 'permissive' simulated-operator policy this is definitionally equal to diagnostic accuracy among proposals that reached approval, so it is not an independent measurement. Reported for completeness and because it makes Unsafe Action Prevention interpretable - see evaluation/operator.py.",
         "unsafe_actions_prevented_by_safety_validator": 0,
         "unsafe_action_prevention_rate": 0.0,
@@ -553,9 +402,9 @@
     }
   },
   "collaboration": {
-    "multi_agent_seconds_mean": 17.5888,
-    "single_agent_seconds_mean": 4.8503,
-    "multi_agent_relative_overhead": 2.6263,
+    "multi_agent_seconds_mean": 8.5266,
+    "single_agent_seconds_mean": 2.1226,
+    "multi_agent_relative_overhead": 3.0171,
     "note": "Both arms share detection, retrieval and all downstream nodes; the difference is the diagnostic step (deterministic signature matching plus an optional LLM narrative, versus one LLM call that must produce the whole answer)."
   },
   "infrastructure": {

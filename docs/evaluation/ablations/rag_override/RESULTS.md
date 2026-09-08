@@ -1,6 +1,6 @@
 # Week 12 — Evaluation Results
 
-Run started `2026-09-08T06:09:26.737925+00:00`, finished `2026-09-08T06:24:12.262872+00:00`, mode `replay`, operator policy `permissive`.
+Run started `2026-09-08T16:00:32.530679+00:00`, finished `2026-09-08T16:07:24.545814+00:00`, mode `replay`, operator policy `permissive`.
 
 ## What this run can and cannot establish
 
@@ -27,16 +27,16 @@ Run started `2026-09-08T06:09:26.737925+00:00`, finished `2026-09-08T06:24:12.26
 
 | Metric | Multi-agent |
 |---|---|
-| Accuracy (all incidents) | 25.0% |
-| Accuracy (when it answered) | 57.1% |
-| Abstention rate | 56.2% |
-| Precision (macro) | 35.9% |
+| Accuracy (all incidents) | 12.5% |
+| Accuracy (when it answered) | 60.0% |
+| Abstention rate | 79.2% |
+| Precision (macro) | 37.5% |
 | Recall (macro) | 50.0% |
-| F1 (macro) | 40.2% |
-| Fault-type accuracy (when answered) | 57.1% |
+| F1 (macro) | 41.7% |
+| Fault-type accuracy (when answered) | 60.0% |
 | **Cross-service accuracy** | 0.0% |
 | Same-service accuracy | 100.0% |
-| Blamed the symptom service (cross-service) | 9 |
+| Blamed the symptom service (cross-service) | 4 |
 | Errored incidents | 0 |
 
 *Cross-service accuracy is the headline capability: incidents where the service showing the symptom is not the service at fault. "Blamed the symptom service" counts the specific failure mode those incidents were designed to expose.*
@@ -45,23 +45,23 @@ Run started `2026-09-08T06:09:26.737925+00:00`, finished `2026-09-08T06:24:12.26
 
 | Metric | Multi-agent |
 |---|---|
-| Detection latency, mean (s) — detection path only | 0.0114 |
-| Detection latency, median (s) | 0.0113 |
-| Time to approval pause, mean (s) — incl. diagnosis | 18.37 |
-| Anomaly detection rate | 43.8% |
+| Detection latency, mean (s) — detection path only | 0.0075 |
+| Detection latency, median (s) | 0.00665 |
+| Time to approval pause, mean (s) — incl. diagnosis | 8.518 |
+| Anomaly detection rate | 20.8% |
 | MTTR, mean (s) | **not measurable here** (see note) |
 | Executions attempted | 0 |
 | Recovery success rate | **not measurable here** (see note) |
 | False recovery rate | **not measurable here** (see note) |
-| Remediation attempts, mean | 0.4375 |
+| Remediation attempts, mean | 0.1875 |
 
 ## 3. AI
 
 | Metric | Multi-agent |
 |---|---|
-| Wall clock per incident, mean (s) | 18.37 |
-| LLM calls per incident, mean | 0.875 |
-| LLM calls, total | 42 |
+| Wall clock per incident, mean (s) | 8.519 |
+| LLM calls per incident, mean | 0.4167 |
+| LLM calls, total | 20 |
 | Incidents with reasoning text | 1 |
 | Hallucination: cited a metric absent from the evidence | 0.0% |
 | **Hallucination: claimed a baseline-range value was elevated** | 0.0% |
@@ -71,7 +71,7 @@ Run started `2026-09-08T06:09:26.737925+00:00`, finished `2026-09-08T06:24:12.26
 
 ### Agent collaboration time
 
-- Multi-agent mean: 18.37s
+- Multi-agent mean: 8.519s
 - Single-agent mean: n/a
 - Multi-agent relative overhead: n/a
 - Both arms share detection, retrieval and all downstream nodes; the difference is the diagnostic step (deterministic signature matching plus an optional LLM narrative, versus one LLM call that must produce the whole answer).
@@ -84,10 +84,10 @@ Run started `2026-09-08T06:09:26.737925+00:00`, finished `2026-09-08T06:24:12.26
 
 | Metric | Multi-agent |
 |---|---|
-| Incidents reaching human approval | 21 |
-| Approved | 21 |
+| Incidents reaching human approval | 10 |
+| Approved | 10 |
 | Rejected | 0 |
-| Approval accuracy | 57.1% |
+| Approval accuracy | 60.0% |
 | **Unsafe actions prevented by Safety Validator** | 0 |
 | Unsafe action prevention rate | 0.0% |
 | Executions without approval (must be 0) | 0 |

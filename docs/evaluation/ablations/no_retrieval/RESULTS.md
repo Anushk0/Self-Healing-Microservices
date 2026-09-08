@@ -1,6 +1,6 @@
 # Week 12 — Evaluation Results
 
-Run started `2026-09-08T05:18:58.698891+00:00`, finished `2026-09-08T06:09:20.642023+00:00`, mode `replay`, operator policy `permissive`.
+Run started `2026-09-08T15:53:54.185465+00:00`, finished `2026-09-08T16:00:27.187502+00:00`, mode `replay`, operator policy `permissive`.
 
 ## What this run can and cannot establish
 
@@ -27,16 +27,16 @@ Run started `2026-09-08T05:18:58.698891+00:00`, finished `2026-09-08T06:09:20.64
 
 | Metric | Multi-agent | Single-agent baseline |
 |---|---|---|
-| Accuracy (all incidents) | 43.8% | 6.2% |
-| Accuracy (when it answered) | 100.0% | 15.8% |
-| Abstention rate | 56.2% | 60.4% |
-| Precision (macro) | 100.0% | 5.8% |
-| Recall (macro) | 100.0% | 18.8% |
-| F1 (macro) | 100.0% | 8.8% |
-| Fault-type accuracy (when answered) | 100.0% | 26.3% |
-| **Cross-service accuracy** | 100.0% | 33.3% |
-| Same-service accuracy | 100.0% | 0.0% |
-| Blamed the symptom service (cross-service) | 0 | 2 |
+| Accuracy (all incidents) | 20.8% | 6.2% |
+| Accuracy (when it answered) | 100.0% | 30.0% |
+| Abstention rate | 79.2% | 79.2% |
+| Precision (macro) | 100.0% | 15.5% |
+| Recall (macro) | 100.0% | 31.2% |
+| F1 (macro) | 100.0% | 18.2% |
+| Fault-type accuracy (when answered) | 90.0% | 30.0% |
+| **Cross-service accuracy** | 100.0% | 50.0% |
+| Same-service accuracy | 100.0% | 16.7% |
+| Blamed the symptom service (cross-service) | 0 | 0 |
 | Errored incidents | 0 | 0 |
 
 *Cross-service accuracy is the headline capability: incidents where the service showing the symptom is not the service at fault. "Blamed the symptom service" counts the specific failure mode those incidents were designed to expose.*
@@ -45,35 +45,35 @@ Run started `2026-09-08T05:18:58.698891+00:00`, finished `2026-09-08T06:09:20.64
 
 | Metric | Multi-agent | Single-agent baseline |
 |---|---|---|
-| Detection latency, mean (s) — detection path only | 0.011 | 0.011 |
-| Detection latency, median (s) | 0.01001 | 0.01001 |
-| Time to approval pause, mean (s) — incl. diagnosis | 58.3 | 4.535 |
-| Anomaly detection rate | 43.8% | 43.8% |
+| Detection latency, mean (s) — detection path only | 0.0062 | 0.0062 |
+| Detection latency, median (s) | 0.005466 | 0.005466 |
+| Time to approval pause, mean (s) — incl. diagnosis | 6.029 | 2.081 |
+| Anomaly detection rate | 20.8% | 20.8% |
 | MTTR, mean (s) | **not measurable here** (see note) | **not measurable here** (see note) |
 | Executions attempted | 0 | 0 |
 | Recovery success rate | **not measurable here** (see note) | **not measurable here** (see note) |
 | False recovery rate | **not measurable here** (see note) | **not measurable here** (see note) |
-| Remediation attempts, mean | 0.4375 | 0.2708 |
+| Remediation attempts, mean | 0.1875 | 0.1458 |
 
 ## 3. AI
 
 | Metric | Multi-agent | Single-agent baseline |
 |---|---|---|
-| Wall clock per incident, mean (s) | 58.3 | 4.539 |
-| LLM calls per incident, mean | 0.875 | 0.4375 |
-| LLM calls, total | 42 | 21 |
-| Incidents with reasoning text | 20 | 21 |
+| Wall clock per incident, mean (s) | 6.031 | 2.082 |
+| LLM calls per incident, mean | 0.4167 | 0.2083 |
+| LLM calls, total | 20 | 10 |
+| Incidents with reasoning text | 10 | 10 |
 | Hallucination: cited a metric absent from the evidence | 0.0% | 0.0% |
-| **Hallucination: claimed a baseline-range value was elevated** | 0.0% | 4.8% |
-| Response parse-issue rate | 0.0% | 4.2% |
+| **Hallucination: claimed a baseline-range value was elevated** | 0.0% | 0.0% |
+| Response parse-issue rate | 0.0% | 0.0% |
 
 *Token cost is not applicable to a self-hosted Ollama model; wall-clock inference time and LLM call count are reported in its place (documented methodology substitution).*
 
 ### Agent collaboration time
 
-- Multi-agent mean: 58.3s
-- Single-agent mean: 4.539s
-- Multi-agent relative overhead: 1184.6%
+- Multi-agent mean: 6.031s
+- Single-agent mean: 2.082s
+- Multi-agent relative overhead: 189.7%
 - Both arms share detection, retrieval and all downstream nodes; the difference is the diagnostic step (deterministic signature matching plus an optional LLM narrative, versus one LLM call that must produce the whole answer).
 
 ## 4. Infrastructure
@@ -84,19 +84,15 @@ Run started `2026-09-08T05:18:58.698891+00:00`, finished `2026-09-08T06:09:20.64
 
 | Metric | Multi-agent | Single-agent baseline |
 |---|---|---|
-| Incidents reaching human approval | 21 | 20 |
-| Approved | 21 | 20 |
+| Incidents reaching human approval | 10 | 10 |
+| Approved | 10 | 10 |
 | Rejected | 0 | 0 |
-| Approval accuracy | 100.0% | 15.0% |
-| **Unsafe actions prevented by Safety Validator** | 0 | 1 |
-| Unsafe action prevention rate | 0.0% | 2.1% |
+| Approval accuracy | 100.0% | 30.0% |
+| **Unsafe actions prevented by Safety Validator** | 0 | 0 |
+| Unsafe action prevention rate | 0.0% | 0.0% |
 | Executions without approval (must be 0) | 0 | 0 |
 
 *Under the 'permissive' simulated-operator policy this is definitionally equal to diagnostic accuracy among proposals that reached approval, so it is not an independent measurement. Reported for completeness and because it makes Unsafe Action Prevention interpretable - see evaluation/operator.py.*
-
-Safety rules that fired during this run:
-
-- High-risk actions are never allowed against 'ledger-service' - it holds financial transaction state behind a transactional, pessimistic-locking boundary. Escalate to manual investigation instead.
 
 ## Raw log
 

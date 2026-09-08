@@ -18,12 +18,12 @@ has already been made.
 ## 8.2 What was found
 
 **The constraint is the contribution.** On held-out cross-service faults — where the service showing
-the symptom is not the service at fault — the pipeline was correct on 9 of 9, and a single-agent LLM
-given byte-identical evidence was correct on 0 of 9, naming the symptom service every time. On
+the symptom is not the service at fault — the pipeline was correct on 4 of 4, and a single-agent LLM
+given byte-identical evidence was correct on 0 of 4, naming the symptom service every time. On
 same-service faults the two were identical. The entire measured difference between the systems sits
 in one class of incident, and the mechanism is legible rather than inferred: retrieval disagreed with
-the correct answer on all nine, and the baseline's own reasoning cites those retrieved incidents as
-its justification in 9 of 9 failures.
+the correct answer on all four, and the baseline's own reasoning cites those retrieved incidents as
+its justification in 4 of 4 failures.
 
 Two findings arrived unlooked-for and are, arguably, more transferable than the headline:
 
@@ -36,7 +36,7 @@ diagnosis is non-trivial.
 **A standard metric was measuring the wrong thing.** Hallucination defined as "cited a metric absent
 from the evidence" reported 0% for a model that was justifying "memory leak" with heap values inside
 the documented normal range — real metrics whose *significance* was invented. A measure comparing
-cited values against documented baselines reports 9.5% on the same responses. The lesson is general:
+cited values against documented baselines reports 10.0% on the same responses. The lesson is general:
 that metric definition will read near-zero for any model whose failure mode is misrepresenting
 things that do exist.
 
@@ -45,8 +45,8 @@ things that do exist.
 Stated with the same prominence as §8.2, because the gap between them is the honest shape of this
 work:
 
-- **Detection, not diagnosis, was the binding constraint.** Both arms abstained on 56.2% of
-  incidents. Measured across all incidents rather than answered ones, accuracy was 43.8% — that is
+- **Detection, not diagnosis, was the binding constraint.** Both arms abstained on 79.2% of
+  incidents. Measured across all incidents rather than answered ones, accuracy was 20.8% — that is
   the deployment-relevant figure, and it is set by a detector that saturates outside its training
   range (a 2 GB heap scores identically to 50 MB).
 - **The absolute accuracy figures do not generalise.** The corpus was synthetic, and its generator
@@ -57,7 +57,7 @@ work:
   reported evaluation did not measure recovery.
 - **The safety validator never fired during evaluation** (0 unsafe actions prevented), because
   dry-run execution never failed and so no retry escalated to the action the rule guards against.
-- **Nine incidents is a thin basis for a proportion**, however cleanly separated 9/9 and 0/9 are.
+- **Four incidents is a thin basis for a proportion**, however cleanly separated 4/4 and 0/4 are.
 
 ## 8.4 Future work
 
@@ -69,7 +69,7 @@ In the order the evidence recommends, not the order that would sound most ambiti
 2. **Fix detection before improving diagnosis.** The diagnostic layer is not the bottleneck. The
    saturation problem is addressable without new machinery: normalise or log-scale features so
    out-of-range values remain informative, score deviation-from-baseline rather than raw values, or
-   run a threshold pre-filter alongside the model. Any of these would raise the 43.8% headline more
+   run a threshold pre-filter alongside the model. Any of these would raise the 20.8% headline more
    than a better diagnostician would.
 3. **Vary the baseline's model.** The strongest available objection to §8.2 is that the baseline's
    cross-service failure reflects a 3B model's capability rather than single-agent framing. This
@@ -86,7 +86,7 @@ In the order the evidence recommends, not the order that would sound most ambiti
 ## 8.5 Closing
 
 The result that matters is not that a multi-agent pipeline outperformed a single-agent one — on half
-the fault types it did not, and it cost 3.6× the wall clock to tie. It is that **a single
+the fault types it did not, and it cost 4.0× the wall clock to tie. It is that **a single
 architectural constraint, cheap to implement and requiring no model capability whatsoever, accounted
 for the whole difference on the incidents where diagnosis is genuinely hard.**
 
@@ -95,7 +95,7 @@ nothing changes — it was contributing no accuracy. Remove the *constraint on* 
 pipeline collapses to its own baseline's numbers, exactly. Everything else the system does — the
 per-service detectors, the signature matching, the deterministic proposer, the safety validation, the
 staged approval — is worth nothing the moment retrieval is allowed to decide. The deterministic layer
-also kept working when the LLM timed out on 18 of 21 incidents, and the conclusions did not move.
+also kept working when the LLM timed out on 9 of 10 incidents, and the conclusions did not move.
 
 So the finding is not "multi-agent is better", and not even "RAG helps". It is narrower and more
 useful than either: **when a retrieval system can be confidently wrong in a structured way, what

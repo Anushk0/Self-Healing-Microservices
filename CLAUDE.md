@@ -148,7 +148,7 @@ never captured. The steps to record one are in §3 and need a cluster.
 
 **Mentor feedback cannot be done for you.** `09-mentor-review-packet.md` is the handover instead: a
 15-minute read path and five decisions where a supervisor's judgement should override mine (should
-the headline be 100% or 43.8%; submit with the synthetic-corpus caveat or hold for the live run; how
+the headline be 100% or 20.8%; submit with the synthetic-corpus caveat or hold for the live run; how
 much weight the withdrawn-competitor finding carries; and so on).
 
 **Week 16 - the ablations, which changed the paper's claims.** Two config-flag ablations, both off
@@ -157,7 +157,7 @@ off in the shipped configuration.
 
 *Ablation A (retrieval disabled)* produced the most consequential finding of the whole evaluation,
 and it is unflattering: **retrieval contributes exactly zero diagnostic accuracy to the multi-agent
-pipeline.** With RAG disabled, all 48 diagnoses were identical - 43.8% overall, 100% when answered,
+pipeline.** With RAG disabled, all 48 diagnoses were identical - 20.8% overall, 100% when answered,
 100% cross-service, F1 1.00, to four decimal places. Retrieval moves only the confidence label. This
 *sharpens* rather than undermines the Week 12 claim: the advantage came entirely from refusing to
 defer to retrieval, not from anything retrieval supplied. Any suggestion that RAG improves diagnosis
@@ -165,7 +165,7 @@ here is unsupported and has been removed from the write-up.
 
 For the single-agent baseline the same intervention was dramatic in both directions: same-service
 accuracy collapsed 100% -> 0%, cross-service accuracy *improved* 0% -> 33.3%, and symptom-service
-blaming fell from 9 of 9 to 2. Retrieval was substituting for reasoning - right on same-service
+blaming fell from 4 of 4 to 2. Retrieval was substituting for reasoning - right on same-service
 faults, systematically wrong on cross-service ones. That the same intervention leaves one arm
 unchanged and reorganises the other is itself evidence for the architectural claim.
 
@@ -178,12 +178,12 @@ have errored every incident.
 (2502.08224, WWW '25) reaches this project's core insight by a different route - constraining the LLM
 at crucial junctures via SOPs where this uses thresholds; written up as a convergence, not a
 contrast. LATS-RCA (2605.03505) supplies a hard cost comparison (~75 API calls and 13 min per
-incident vs 0.875 calls and 17.6 s here) and independently corroborates the benchmark-vs-production
+incident vs 0.4167 calls and 8.5 s here) and independently corroborates the benchmark-vs-production
 caution (91.3% -> 60-70%). GALA (2508.12472 / 2608.08968) prompted a conceded limitation: a
 dependency graph could *derive* the symptom-to-cause relation that `FAULT_SERVICE_MAP` hardcodes.
 
 **Week 16 item 2 (fifth service / Istio) was deliberately not attempted** - it needs a cluster, and
-the evidence points elsewhere: detection surfaced only 43.8% of incidents, so adding services would
+the evidence points elsewhere: detection surfaced only 20.8% of incidents, so adding services would
 add scope without addressing the measured bottleneck. Recorded as a decision in
 `10-ablations.md` §10.5, not silently skipped.
 
@@ -206,14 +206,14 @@ guard **live** against the real Evaluation file, aborting the run unless a write
 Evaluation incident is refused. Metrics refuse to fabricate: an unmeasured quantity is `None` with a
 reason, never a number, and an abstention is scored separately from a wrong answer.
 
-**The result.** On 48 held-out incidents: multi-agent **100% accuracy when it answered (21/21)**
-versus 57.1% for the single-agent baseline, and on the cross-service faults the project was built
-around, **100% (9/9) versus 0% (0/9)**. The two arms were *identical* on same-service faults, so the
+**The result.** On 48 held-out incidents: multi-agent **100% accuracy when it answered (10/10)**
+versus 60.0% for the single-agent baseline, and on the cross-service faults the project was built
+around, **100% (4/4) versus 0% (0/4)**. The two arms were *identical* on same-service faults, so the
 entire difference is confined to incidents where the symptom service is not the faulty one.
 
 **The mechanism, which matters more than the number.** Breaking the multi-agent results down by
-determination method gives a perfect partition: all 12 same-service incidents were
-`metric_signature+rag_agreement`, and all 9 cross-service incidents were
+determination method gives a perfect partition: all 6 same-service incidents were
+`metric_signature+rag_agreement`, and all 4 cross-service incidents were
 `metric_signature+rag_disagreement` - and all 9 were still correct. On every cross-service incident
 retrieval *disagreed with the right answer*, returning `memory-leak` incidents rooted at
 `payment-service` (the symptom service). The baseline received the same retrieved incidents and
@@ -227,10 +227,10 @@ fault formulas and the RCA signature thresholds both derive from the same `OBSER
 constants, so a threshold matcher was evaluated on data generated to exceed those thresholds. The
 *comparison* is unaffected (both arms got identical inputs) and the baseline's failure is not an
 artefact, but the absolute figure is not a capability claim. Detection - not diagnosis - was the
-binding constraint: both arms abstained on 56.2% of incidents because the shared Isolation Forest
-surfaced only 21 of 48, which is the saturation limitation from Week 10 showing up as a system
+binding constraint: both arms abstained on 79.2% of incidents because the shared Isolation Forest
+surfaced only 10 of 48, which is the saturation limitation from Week 10 showing up as a system
 outcome. MTTR, Recovery Success Rate and False Recovery Rate are **not measurable by replay** and
-are reported as such. And the multi-agent arm's LLM narration timed out on 20 of 21 incidents while
+are reported as such. And the multi-agent arm's LLM narration timed out on 9 of 10 incidents while
 diagnostic accuracy stayed at 100% - an unplanned but direct demonstration that the deterministic
 conclusion does not depend on the model.
 

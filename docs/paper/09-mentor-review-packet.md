@@ -20,13 +20,13 @@ Those three establish what was measured, what is claimed, and why the claim is b
 These are genuine forks where I made a defensible call that a supervisor might reasonably overturn.
 Each is flagged in the text, but they are collected here so none is discovered late.
 
-### 2.1 Should the headline be 100% or 43.8%?
+### 2.1 Should the headline be 100% or 20.8%?
 
 Both are true and both are reported. Accuracy *when the system answered* is 100%; accuracy over
-*all* incidents — counting the 56.2% where the detector never surfaced anything — is 43.8%.
+*all* incidents — counting the 79.2% where the detector never surfaced anything — is 20.8%.
 
-I led with the comparison (100% vs 57.1%, and 9/9 vs 0/9) and put 43.8% in the abstract and §1.4.
-An examiner focused on deployment realism may want 43.8% foregrounded instead. **This is a framing
+I led with the comparison (100% vs 60.0%, and 4/4 vs 0/4) and put 20.8% in the abstract and §1.4.
+An examiner focused on deployment realism may want 20.8% foregrounded instead. **This is a framing
 call about which honest number leads, not a question of what to report.**
 
 ### 2.2 How much weight should the withdrawn-competitor finding carry?
@@ -69,7 +69,7 @@ goes in §5.3; otherwise it should be dropped rather than cited vaguely.
 1. Is the narrowness of the claim (§1.4, §8.5) a strength or does it read as under-selling?
 2. Does the cross-service framing need more justification as a *realistic* incident class, or is it
    self-evidently so to this audience?
-3. Is the cost comparison against LATS-RCA (75 API calls vs 0.875) fair to include given the
+3. Is the cost comparison against LATS-RCA (75 API calls vs 0.4167) fair to include given the
    datasets differ, or does it invite an apples-to-oranges objection?
 4. For the defence: lead with the demo or with the results?
 
@@ -78,8 +78,13 @@ goes in §5.3; otherwise it should be dropped rather than cited vaguely.
 Stated so the review is not falsely reassured:
 
 - **Nobody has read the three dataset-methodology citations.** See §2.5.
-- **The Java test suite was not re-run** in the final environment — no Maven installed there. 294
-  Python tests pass; the 47 Java tests were last verified in an earlier environment.
+- **The Java test suite is now partially verified in this environment.** Maven and a Temurin JDK 17
+  were installed for a final audit: auth-service (12 tests), notification-service (4) and
+  payment-service (13) all pass — 29 of the 47. `ledger-service` compiles cleanly including its test
+  sources, but its 18 tests need a live PostgreSQL instance and were not run. The "47 Java tests"
+  figure is confirmed by count (29 + 18).
+- **The services do not build on JDK 23** — a Lombok/JDK incompatibility, documented in the root
+  README's prerequisites. The code is correct; the toolchain is the constraint.
 - **No screen recording of the demo exists** (`07-demo-runbook.md` §3 has the steps to make one).
 - **The paper has not been read end-to-end as a single document by a human.** I performed a
   claim-by-claim audit (`06-novelty-claim-audit.md`), which catches unsupported assertions but not

@@ -3,6 +3,25 @@
 Academic capstone project. See `CLAUDE.md` for the full permanent project
 rules and weekly roadmap.
 
+## Prerequisites (read before building)
+
+| Component | Requirement | Notes |
+|---|---|---|
+| Java services | **JDK 17** | `maven.compiler.release=17`; the Docker build uses `eclipse-temurin-17`. |
+| Python packages | Python 3.10+ | `pip install -r requirements.txt` in each of the three packages. |
+| Local LLM | Ollama | Model set by `OLLAMA_MODEL` (default `llama3.2:1b`). |
+| Cluster (optional) | Docker + Minikube | Only needed for live fault injection and recovery metrics. |
+
+> **The Java services build on JDK 17 and do not build on JDK 23.** Spring Boot 3.3.4 pins Lombok
+> 1.18.34, whose annotation processor does not run on JDK 23 — and newer Lombok releases did not fix
+> it in testing. Only `ledger-service` actually uses Lombok (`@Getter`/`@Setter` on its entities), so
+> the other three compile on a newer JDK and only ledger fails, with `cannot find symbol` errors on
+> generated getters that look like code bugs but are not. Build with JDK 17, or use the Dockerfiles,
+> which pin it already.
+>
+> Verified on JDK 17 (Temurin 17.0.13): auth 12 tests, notification 4, payment 13 — all passing;
+> ledger compiles including test sources, and its 18 tests require a PostgreSQL instance.
+
 ## Status
 
 **Weeks 15-16 complete — the roadmap is finished**, except for two items that need a person or a
@@ -27,9 +46,9 @@ had occasion to fire, and reporting it as demonstrated would have been unearned.
 Weeks 12-14 complete: the evaluation ran and the paper sections are drafted from it.
 
 **The result.** On 48 held-out incidents, the multi-agent pipeline was correct on **100% of the
-incidents it answered (21/21)** versus 57.1% for the single-agent baseline — and on the
+incidents it answered (10/10)** versus 60.0% for the single-agent baseline — and on the
 cross-service faults this project was built around (where the service showing the symptom is not the
-service at fault), **100% (9/9) versus 0% (0/9)**. The two arms were *identical* on same-service
+service at fault), **100% (4/4) versus 0% (0/4)**. The two arms were *identical* on same-service
 faults, so the whole difference sits in exactly the cases the dataset was designed to isolate.
 
 **Why.** On every cross-service incident, retrieval disagreed with the correct answer — it returned
@@ -41,7 +60,7 @@ the entire measured difference between the arms.
 **Stated as prominently as the result:** this run's corpus is fully synthetic (no cluster on the run
 machine), and the diagnostic thresholds and the synthetic generator share constants — so the
 absolute 100% is bounded by that circularity, though the comparison is not. Detection, not
-diagnosis, was the real ceiling: both arms abstained on 56.2% of incidents. MTTR, Recovery Success
+diagnosis, was the real ceiling: both arms abstained on 79.2% of incidents. MTTR, Recovery Success
 Rate and False Recovery Rate are **not measurable by replay** and are reported as unmeasurable
 rather than as a fabricated 100%.
 

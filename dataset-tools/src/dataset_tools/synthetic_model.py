@@ -17,11 +17,33 @@ configuration, because it reuses those same bounds.
 from __future__ import annotations
 
 import random
+import zlib
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from . import config
 from .incidents import compute_deltas, estimate_severity, generate_descriptions
+
+
+def _stable_fault_type_offset(fault_type: str) -> int:
+    """A per-fault-type seed offset that is identical in every process and on every machine.
+
+    This deliberately does NOT use the builtin `hash()`. Python randomises string hashing per
+    process unless `PYTHONHASHSEED` is pinned, so `hash(fault_type)` produced a different seed on
+    every run - which silently made the "deterministic" generator non-reproducible: incident IDs
+    stayed stable (they come from a sort) while every metric value, timestamp and postmortem string
+    changed. `zlib.crc32` is specified, stable across processes, machines and Python versions.
+    """
+    return zlib.crc32(fault_type.encode("utf-8")) % 1000
+
+
+def _stable_start_offset_seconds(fault_type: str, index: int) -> int:
+    """Per-incident second-offset for the synthetic start time, stable across processes.
+
+    Replaces `hash((fault_type, index))`, which had the same per-process randomisation problem as
+    `_stable_fault_type_offset` - and was harder to notice, because it only moved timestamps (and
+    the postmortem text that embeds them) rather than metric values."""
+    return zlib.crc32(f"{fault_type}:{index}".encode("utf-8")) % 60
 
 # Baseline ranges anchored to values actually observed live in the four real Week 5 experiments
 # (see dataset-tools/README.md "Synthetic data provenance" for the exact source timestamps).
@@ -90,8 +112,9 @@ def _params_for(fault_type: str, rng: random.Random) -> dict:
 
 def generate_synthetic_incident(fault_type: str, index: int, base_seed: int, base_start: datetime) -> dict:
     """`index` and `base_seed` together make this fully deterministic and reproducible: the same
-    (fault_type, index, base_seed) always yields byte-identical output."""
-    seed = base_seed * 100_000 + hash(fault_type) % 1000 + index
+    (fault_type, index, base_seed) always yields byte-identical output, in any process, on any
+    machine - see `_stable_fault_type_offset` for why the builtin `hash()` cannot be used here."""
+    seed = base_seed * 100_000 + _stable_fault_type_offset(fault_type) + index
     rng = random.Random(seed)
 
     baseline_s = rng.choice([15, 20, 30, 45, 60])
@@ -100,7 +123,11 @@ def generate_synthetic_incident(fault_type: str, index: int, base_seed: int, bas
     interval_s = rng.choice([2, 3, 5, 10])
     request_rate_per_interval = rng.uniform(0.7, 1.3)  # jitter on "how many probes/cycles happened"
 
-    start = base_start + timedelta(minutes=index * 7, seconds=hash((fault_type, index)) % 60)
+    # Same reasoning as `_stable_fault_type_offset`: a builtin `hash()` here would re-introduce
+    # per-process variation into every incident's timestamps (and therefore its postmortem text).
+    start = base_start + timedelta(
+        minutes=index * 7, seconds=_stable_start_offset_seconds(fault_type, index)
+    )
     phases, times = _phase_bounds(start, baseline_s, fault_s, recovery_s)
 
     params = _params_for(fault_type, rng)

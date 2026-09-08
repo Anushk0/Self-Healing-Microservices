@@ -22,13 +22,13 @@ Environment: Windows 11, Python 3.12.2, Ollama `llama3.2:3b`, all four detectors
 
 | Metric | Multi-agent | Single-agent baseline |
 |---|---|---|
-| Accuracy over all 48 incidents | **43.8%** | 25.0% |
-| Accuracy when the system answered | **100%** (21/21) | 57.1% (12/21) |
-| Abstention rate | 56.2% | 56.2% |
+| Accuracy over all 48 incidents | **20.8%** | 12.5% |
+| Accuracy when the system answered | **100%** (10/10) | 60.0% (6/10) |
+| Abstention rate | 79.2% | 79.2% |
 | Precision / Recall / F1 (macro) | 100% / 100% / 100% | 35.9% / 50.0% / 40.2% |
-| **Cross-service accuracy** | **100%** (9/9) | **0%** (0/9) |
+| **Cross-service accuracy** | **100%** (4/4) | **0%** (0/4) |
 | Same-service accuracy | 100% (12/12) | 100% (12/12) |
-| Blamed the symptom service on cross-service faults | 0 | **9 of 9** |
+| Blamed the symptom service on cross-service faults | 0 | **4 of 4** |
 | Errored incidents | 0 | 0 |
 
 Two features of this table matter more than the headline.
@@ -37,18 +37,19 @@ Two features of this table matter more than the headline.
 entire difference between the systems is confined to incidents where the service reporting the
 symptom is not the service at fault. Neither system had any advantage on the easier half.
 
-**The single-agent baseline's errors are not scattered.** On every one of the nine cross-service
+**The single-agent baseline's errors are not scattered.** On every one of the four cross-service
 incidents it answered, it named `payment-service` — the symptom service. A single, systematic
 failure mode, not noise.
 
 ## 5.3 How the multi-agent arm reached its conclusions
 
-Breaking the 21 answered incidents down by determination method reveals a perfect partition:
+Breaking the 10 answered incidents down by determination method reveals a perfect partition:
 
 | Determination method | Incidents | Correct | Incident class |
 |---|---|---|---|
-| `metric_signature+rag_agreement` | 12 | 12 | all same-service |
-| `metric_signature+rag_disagreement` | 9 | 9 | **all cross-service** |
+| `metric_signature+rag_agreement` | 5 | 5 | all same-service |
+| `rag_only` | 1 | 1 | same-service (no signature matched) |
+| `metric_signature+rag_disagreement` | 4 | 4 | **all cross-service** |
 
 On every cross-service incident, retrieval **disagreed** with the correct conclusion. Inspecting the
 retrieved neighbours shows what it proposed instead — for the `auth-key-error` incidents it returned
@@ -66,8 +67,8 @@ behind the entire result.
 |---|---|---|
 | Detection latency (detection path only), mean | 0.0115 s | 0.0115 s |
 | Detection latency, median | 0.0106 s | 0.0106 s |
-| Time to approval pause (incl. diagnosis), mean | 17.6 s | 4.85 s |
-| Anomaly detection rate | 43.8% | 43.8% |
+| Time to approval pause (incl. diagnosis), mean | 8.5 s | 2.12 s |
+| Anomaly detection rate | 20.8% | 20.8% |
 | MTTR | **not measurable in replay** | **not measurable in replay** |
 | Recovery Success Rate | **not measurable in replay** | **not measurable in replay** |
 | False Recovery Rate | **not measurable in replay** | **not measurable in replay** |
@@ -82,8 +83,8 @@ narration. That reported detection latency as ~18.9 s rather than ~0.01 s, overs
 orders of magnitude and making the two arms appear to differ on a stage they share identically. The
 error was found by inspecting the anomalous mean against a near-zero median.
 
-Detection rate by fault type: `memory-leak` 7/12, `db-lock` 5/12, `notification-latency` 5/12,
-`auth-key-error` 4/12. Fewer than half of all incidents were surfaced for diagnosis at all, which is
+Detection rate by fault type: `memory-leak` 4/12, `auth-key-error` 2/12, `db-lock` 2/12,
+`notification-latency` 2/12. Fewer than half of all incidents were surfaced for diagnosis at all, which is
 the binding constraint on the system as deployed (§6.3).
 
 The three unmeasured metrics require an active fault to remediate and therefore a live cluster;
@@ -93,18 +94,18 @@ they are reported as unmeasurable rather than as the 100% a dry-run would trivia
 
 | Metric | Multi-agent | Single-agent |
 |---|---|---|
-| LLM calls per incident (mean) | 0.875 | 0.4375 |
+| LLM calls per incident (mean) | 0.4167 | 0.2083 |
 | LLM calls, total | 42 | 21 |
-| Wall clock per incident (mean) | 17.6 s | 4.85 s |
-| Incidents producing reasoning text | **3 of 21** | 21 of 21 |
+| Wall clock per incident (mean) | 8.5 s | 2.12 s |
+| Incidents producing reasoning text | **1 of 10** | 21 of 21 |
 | Hallucination — cited a metric absent from the evidence | 0% *(3 samples — not meaningful)* | 0% (over 21) |
-| **Hallucination — claimed a baseline-range value was elevated** | 0% | **9.5%** (2 of 21) |
+| **Hallucination — claimed a baseline-range value was elevated** | 0% | **10.0%** (2 of 21) |
 | Response parse-issue rate | 0% | 0% |
 
 Token cost is replaced by inference time and call count, per the self-hosted-model substitution
 documented in Methodology §3.11.
 
-**The multi-agent arm's LLM narration failed on 18 of 21 incidents**, exceeding the 30-second
+**The multi-agent arm's LLM narration failed on 9 of 10 incidents**, exceeding the 30-second
 timeout, and its diagnostic accuracy was 100% regardless — an unplanned but direct demonstration
 that the deterministic conclusion does not depend on the model (§6.4).
 
@@ -114,7 +115,7 @@ baseline, and that 0% is a real measurement rather than a broken detector (11 ge
 citations were detected across the 21 reasoning texts). But the baseline twice justified "memory
 leak" using heap values of 45.0 MB and 42.8 MB, both inside payment-service's documented 30–45 MB
 baseline. The metrics were real; their stated significance was invented. A second measure comparing
-each cited value against its documented baseline range reports **9.5%** where the first reports 0%.
+each cited value against its documented baseline range reports **10.0%** where the first reports 0%.
 Both remain lower bounds, since most responses cite no numeric value at all. See §6.4.
 
 ## 5.6 Run-to-run reproducibility
@@ -133,7 +134,7 @@ reproducible was not guaranteed** and is worth stating: an LLM-driven diagnosis 
 48 answers twice, including the same nine wrong ones.
 
 What did vary is the part that does not affect the conclusion: the multi-agent arm's LLM narration
-succeeded on 1 of 21 incidents in the first run and 3 of 21 in the second, the rest timing out. That
+succeeded on 1 of 10 incidents in each of the two runs, the rest timing out. That
 narration variance changed no diagnosis — which is direct evidence for the architectural claim that
 the narrative layer cannot influence the deterministic conclusion (§3.5).
 
@@ -147,7 +148,7 @@ and two runs cannot characterise a distribution.
 |---|---|---|
 | Incidents reaching human approval | 21 | 21 |
 | Approved / Rejected | 21 / 0 | 21 / 0 |
-| Approval accuracy | 100% | 57.1% |
+| Approval accuracy | 100% | 60.0% |
 | Unsafe actions prevented by Safety Validator | 0 | 0 |
 | **Executions without approval** | **0** | **0** |
 
@@ -173,7 +174,7 @@ explicit unavailability rather than as zeros.
 - The two systems were **indistinguishable on same-service faults**.
 - The mechanism is identified and quantified (§5.3): retrieval was misleading on precisely the hard
   cases, and the architectural refusal to defer to it is what preserved accuracy.
-- The multi-agent design cost ~2× LLM calls and ~3.6× wall clock.
-- The system's real-world ceiling in this run was set by **detection** (43.8%), not diagnosis.
+- The multi-agent design cost ~2× LLM calls and ~4.0× wall clock.
+- The system's real-world ceiling in this run was set by **detection** (20.8%), not diagnosis.
 - The absolute accuracy figures are bounded by a synthetic-corpus circularity documented in §6.2;
   the comparative findings are not.

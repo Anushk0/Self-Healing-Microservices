@@ -146,9 +146,9 @@ Second, the cost comparison is stark and worth stating plainly:
 
 | | LATS-RCA (reported) | This system (measured) |
 |---|---|---|
-| LLM calls per incident | ~75 | **0.875** |
-| Tokens per incident | ~220K | n/a (self-hosted; ~17.6 s wall clock) |
-| Time per incident | ~13 min | **17.6 s** |
+| LLM calls per incident | ~75 | **0.4167** |
+| Tokens per incident | ~220K | n/a (self-hosted; ~8.5 s wall clock) |
+| Time per incident | ~13 min | **8.5 s** |
 
 The comparison is not like-for-like — different datasets, different fault taxonomies, different
 telemetry, and LATS-RCA is doing genuinely more exploratory work — so it must not be presented as

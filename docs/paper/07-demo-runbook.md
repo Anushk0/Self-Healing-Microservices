@@ -32,7 +32,7 @@ the sentence.
 Run the single-agent arm on that incident. It answers `payment-service`.
 
 > "This is a single LLM with the same telemetry and the same retrieved history the full pipeline
-> gets. It says payment-service. It said payment-service on all nine cross-service incidents in the
+> gets. It says payment-service. It said payment-service on all four cross-service incidents in the
 > evaluation — nine out of nine, the same wrong answer every time."
 
 Then show *why*, from the model's own words (`docs/evaluation/raw_run.json`):
@@ -125,9 +125,9 @@ Record beats 2–4 in one take if possible; cuts invite "what happened in betwee
 
 Live demos fail. Decide in advance:
 
-- **Ollama times out** (it did on 18 of 21 incidents in the evaluation) — this is *fine* and on-message: the deterministic conclusion is unaffected. Say so and continue.
+- **Ollama times out** (it did on 9 of 10 incidents in the evaluation) — this is *fine* and on-message: the deterministic conclusion is unaffected. Say so and continue.
 - **A pod isn't ready** — have the recording ready to cut to.
-- **Detection doesn't fire** on your chosen incident — known and expected (43.8% rate). Have a
+- **Detection doesn't fire** on your chosen incident — known and expected (20.8% rate). Have a
   pre-selected incident ID that you have already confirmed detects.
 - **Everything fails** — the artefacts stand alone: `docs/evaluation/RESULTS.md` and the three
   figures make the argument without a live system.

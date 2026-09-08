@@ -52,8 +52,8 @@ controlled result — while also removing a claim the earlier draft made.
 identical. Any suggestion that RAG improves diagnosis here is unsupported and has been removed.
 
 **The constraint on retrieval contributes everything.** Allowing retrieval to override reproduced the
-single-agent baseline's numbers to four decimal places — 25.0% overall, 57.1% when answered, F1
-0.4022, the same 9 symptom-service attributions.
+single-agent baseline's numbers to four decimal places — 12.5% overall, 60.0% when answered, F1
+0.4167, the same 4 symptom-service attributions.
 
 So the value is not in the retrieval, and not in the multi-agent decomposition, but specifically in
 the refusal to let retrieval decide.
