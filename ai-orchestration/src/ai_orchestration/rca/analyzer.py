@@ -17,6 +17,7 @@ import logging
 from collections import Counter
 from typing import Optional
 
+from .. import config as ai_config
 from ..llm.ollama_client import OllamaClient, OllamaUnavailableError
 from ..llm.prompts import build_rca_reasoning_prompt
 from ..rag.models import RetrievalResult
@@ -119,6 +120,23 @@ def analyze(anomaly_result_dict: dict, retrieval: RetrievalResult, ollama_client
                 evidence_summary += (
                     f" {fault_type_votes[top_retrieved_fault_type]}/{len(retrieval.incidents)} "
                     f"retrieved similar incidents agree (fault_type='{top_retrieved_fault_type}')."
+                )
+            elif ai_config.RAG_MAY_OVERRIDE_SIGNATURE:
+                # Week 16 ablation only - never the shipped behaviour. Lets retrieval win a
+                # disagreement, i.e. builds the conventional RAG-first arrangement this project
+                # argues against, so its cost can be measured instead of asserted.
+                overridden_from = suspected_fault_type
+                suspected_fault_type = top_retrieved_fault_type
+                closest_agreeing = next(
+                    (inc for inc in retrieval.incidents if inc.fault_type == top_retrieved_fault_type),
+                    retrieval.incidents[0],
+                )
+                root_cause_service = closest_agreeing.root_cause_service
+                determination_method = "rag_override"
+                evidence_summary += (
+                    f" ABLATION (RAG_MAY_OVERRIDE_SIGNATURE): retrieved incidents mostly suggest "
+                    f"'{top_retrieved_fault_type}', overriding the metric-signature conclusion "
+                    f"'{overridden_from}'."
                 )
             else:
                 determination_method = "metric_signature+rag_disagreement"

@@ -173,6 +173,16 @@ def _make_interpret_node(ollama_client: OllamaClient):
 
 def _retrieve_similar_incidents_node(state: WorkflowState) -> dict:
     anomaly_result = state["anomaly_result"]
+
+    if not ai_config.RETRIEVAL_ENABLED:
+        # Week 16 memory-ablation only. Returns the same shape an empty retrieval produces, so
+        # every downstream node behaves exactly as it would when the collection legitimately has
+        # no neighbours - the ablation removes the evidence, not the code path.
+        return {"retrieval": RetrievalResult(
+            query_text="", incidents=[], source_collection="incident_memory", status="empty",
+            reason="Retrieval disabled for ablation (AI_ORCHESTRATION_RETRIEVAL_ENABLED=false)",
+        ).to_dict()}
+
     llm_interpretation = state.get("llm_interpretation") or {}
     abnormal_summary = (
         llm_interpretation.get("abnormal_summary") if llm_interpretation.get("status") == "interpreted" else None

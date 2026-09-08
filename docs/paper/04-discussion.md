@@ -73,9 +73,14 @@ conclusion, it would have been led to `payment-service` on precisely the cases t
 have scored 0% cross-service, identical to the baseline. The deterministic layer's refusal to defer
 is what produced 9/9.
 
-This also reframes what "RAG improves RCA" means. In this evaluation, retrieval was *actively
-harmful* on the hard cases and neutral-to-helpful on the easy ones. A system architected to trust it
-inherits its errors on exactly the incidents where diagnosis is non-trivial.
+This also reframes what "RAG improves RCA" means, and the ablations in §6.9 sharpen the reframing
+further than this section originally claimed. For the multi-agent pipeline retrieval turned out to be
+**diagnostically inert** — removing it changed none of the 48 diagnoses — so the advantage came
+entirely from the refusal to defer, not from anything retrieval supplied. For the single-agent
+baseline retrieval was simultaneously *load-bearing* (it collapses to 0% same-service accuracy
+without it) and *harmful* (cross-service accuracy improves from 0% to 33% when it is removed). A
+system architected to trust retrieval inherits its blind spots on exactly the incidents where
+diagnosis is non-trivial.
 
 ## 6.2 What the 100% does and does not mean
 
@@ -248,16 +253,61 @@ also the class humans find hardest — but it is not "multi-agent is better at i
 - **Detection and diagnosis are entangled in the headline number.** Accuracy over all incidents
   (43.8%) reflects a weak detector as much as a strong diagnostician.
 
-## 6.9 Recommended next experiments
+## 6.9 What the ablations established
+
+Full detail in `10-ablations.md`; the two findings that change claims in this Discussion:
+
+**Retrieval contributes zero diagnostic accuracy to the multi-agent pipeline.** Running the full
+evaluation with retrieval disabled produced *identical* results on every performance metric — 43.8%
+overall, 100% when answered, 100% cross-service, F1 1.00. Not one of 48 diagnoses changed. Retrieval
+affects only the confidence label and the recorded determination method.
+
+This is unflattering and belongs in the paper anyway. §6.1 argued that the *constraint on* retrieval
+was the source of the multi-agent advantage; the ablation sharpens that to something stronger and
+more awkward: **retrieval itself was not contributing, so what mattered was entirely the refusal to
+defer to it.** Any claim that RAG improves diagnosis in this system is unsupported. Its defensible
+roles here are confidence calibration, operator-facing provenance, and a fallback for incidents no
+signature matches.
+
+**For the single-agent baseline, retrieval was load-bearing and harmful at once.** Removing it
+collapsed same-service accuracy from 100% to 0% while *improving* cross-service accuracy from 0% to
+33.3%, and symptom-service blaming fell from 9 of 9 to 2. The reading is that retrieval substitutes
+for reasoning: the model pattern-matches to precedent, which is right on same-service faults and
+wrong on cross-service ones. Remove precedent and it cannot diagnose at all, but it also stops being
+systematically dragged to the symptom service.
+
+The same intervention leaving one arm unchanged and reorganising the other is itself evidence for the
+architectural claim — advisory in one design, causal in the other.
+
+**Ablation B closes the argument.** Letting retrieval override a signature match — i.e. rebuilding
+the conventional RAG-first design — collapsed cross-service accuracy from 100% to **0%** and
+reproduced the single-agent baseline's numbers *exactly*: 25.0% overall, 57.1% when answered, F1
+0.4022, and the same 9 symptom-service attributions. Every metric identical to four decimal places.
+The determination-method breakdown confirms the mechanism directly: 12 `rag_agreement` unchanged, and
+**9 `rag_override`** — precisely the nine cross-service incidents, each flipped to retrieval's answer.
+
+Taken together the two ablations make the attribution in §6.1 a controlled result rather than an
+interpretation of a correlation:
+
+| | Cross-service accuracy |
+|---|---|
+| Shipped configuration | **100%** |
+| Retrieval removed entirely (A) | **100%** — unchanged |
+| Retrieval permitted to override (B) | **0%** — baseline reproduced |
+
+The uncomfortable precision of this is worth stating: **the value is not in the retrieval, and not in
+the multi-agent decomposition, but specifically in the refusal to let retrieval decide.** Under
+ablation B the pipeline keeps its per-service detectors, its signature matching, its deterministic
+proposer, its safety validation and its staged approval — and all of it is worth nothing. One `if`
+branch accounts for the entire margin.
+
+## 6.10 Recommended next experiments
 
 In priority order, from what this run actually showed:
 
 1. **Re-run against live faults** (`--mode live`). This is the single highest-value follow-up: it
    removes the circularity of §6.2 and fills in the three unmeasured system metrics at once.
-2. **Ablate the RAG-override policy.** Re-run the multi-agent arm allowing retrieval to override the
-   signature match. §6.1 predicts cross-service accuracy collapses from 100% to near 0%. Confirming
-   that would convert the mechanism argument from an observation into a controlled result, and it is
-   cheap — one configuration flag.
+2. ~~Ablate the RAG-override policy.~~ **Done** — see §6.9 and `10-ablations.md`.
 3. **Vary the baseline's model.** Establish whether the baseline's cross-service failure is a
    capability limit of a 3B model or a property of single-agent framing. This is the strongest
    available objection to the headline result and should be pre-empted.

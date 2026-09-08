@@ -131,6 +131,26 @@ RECOVERY_VERIFICATION_INTERVAL_SECONDS = float(
 # comparison would not be reproducible.
 FEEDBACK_ENABLED = os.environ.get("AI_ORCHESTRATION_FEEDBACK_ENABLED", "true").lower() == "true"
 
+# --- Week 16: ablation switches ---------------------------------------------------------------
+#
+# These exist so the two load-bearing design decisions can be *turned off and measured*, rather
+# than defended in prose. Both default to the shipped behaviour; nothing changes unless an
+# experiment sets them.
+#
+# RETRIEVAL_ENABLED=false answers "does RAG contribute anything?" by running the pipeline with an
+# empty retrieval result - the roadmap's memory-ablation experiment.
+RETRIEVAL_ENABLED = os.environ.get("AI_ORCHESTRATION_RETRIEVAL_ENABLED", "true").lower() == "true"
+
+# RAG_MAY_OVERRIDE_SIGNATURE=true answers the sharper question: what would this system have scored
+# if it had been built the conventional way, letting retrieved incidents override a deterministic
+# signature match? The Week 12 results attribute the entire multi-agent/single-agent gap to the
+# refusal to defer to retrieval, so this flag is what converts that attribution from an observation
+# into a controlled result. Never enabled in the shipped configuration - retrieval overriding direct
+# evidence is precisely the behaviour this project argues against.
+RAG_MAY_OVERRIDE_SIGNATURE = os.environ.get(
+    "AI_ORCHESTRATION_RAG_MAY_OVERRIDE_SIGNATURE", "false"
+).lower() == "true"
+
 # --- Ollama ---------------------------------------------------------------------------------
 
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")

@@ -5,6 +5,25 @@ rules and weekly roadmap.
 
 ## Status
 
+**Weeks 15-16 complete — the roadmap is finished**, except for two items that need a person or a
+cluster (supervisor feedback, and a live-fault re-run).
+
+The paper is complete end to end: abstract, introduction, dataset construction, methodology,
+results, discussion, related work, ablations, conclusion, five figures, a defence runbook and a
+claim-by-claim novelty audit — in `docs/paper/`, with the evidence in `docs/evaluation/`.
+
+**The ablations changed the paper's claims, in an unflattering direction that is now reported as
+such.** Disabling retrieval entirely left all 48 multi-agent diagnoses *identical* — 100% when
+answered, 100% cross-service, F1 1.00. Retrieval contributes zero diagnostic accuracy here; it moves
+only the confidence label. That sharpens rather than weakens the headline: the advantage came
+entirely from *refusing to defer* to retrieval, not from anything retrieval supplied. For the
+single-agent baseline the same change collapsed same-service accuracy 100%→0% while *improving*
+cross-service accuracy 0%→33% — retrieval was substituting for reasoning.
+
+**The novelty audit weakened two claims and removed one.** Unsafe-action prevention was cut from the
+contributions because the measured count is 0 — dry-run execution never failed, so the rule never
+had occasion to fire, and reporting it as demonstrated would have been unearned.
+
 Weeks 12-14 complete: the evaluation ran and the paper sections are drafted from it.
 
 **The result.** On 48 held-out incidents, the multi-agent pipeline was correct on **100% of the

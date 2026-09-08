@@ -28,6 +28,12 @@ def main() -> None:
                         help="e.g. http://localhost:9090 - omit to record infrastructure metrics as unavailable")
     parser.add_argument("--allow-live-execution", action="store_true",
                         help="do NOT force dry-run (only meaningful with --mode live)")
+    parser.add_argument("--ablation", default="none",
+                        choices=["none", "no_retrieval", "rag_override"],
+                        help="Week 16 ablations. 'no_retrieval' runs with an empty retrieval result "
+                             "(does RAG contribute anything?). 'rag_override' lets retrieved "
+                             "incidents override a deterministic signature match (what would this "
+                             "system have scored if built the conventional way?).")
     parser.add_argument("--from-run", default=None, metavar="RAW_RUN_JSON",
                         help="recompute metrics and regenerate all artefacts from a previously "
                              "saved raw_run.json instead of running the pipeline again. Every "
@@ -55,6 +61,11 @@ def main() -> None:
     if not args.allow_live_execution:
         ai_config.EXECUTION_DRY_RUN = True
     ai_config.FEEDBACK_ENABLED = False  # never write evaluation runs into retrieval memory
+
+    if args.ablation == "no_retrieval":
+        ai_config.RETRIEVAL_ENABLED = False
+    elif args.ablation == "rag_override":
+        ai_config.RAG_MAY_OVERRIDE_SIGNATURE = True
 
     run = harness.run_evaluation(
         arms=[a.strip() for a in args.arms.split(",") if a.strip()],  # type: ignore[arg-type]

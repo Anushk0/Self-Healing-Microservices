@@ -108,6 +108,15 @@ def _environment_block(mode: str, detectors: dict, ollama_client: OllamaClient) 
         "feedback_enabled": ai_config.FEEDBACK_ENABLED,
         "anomaly_score_threshold": ai_config.ANOMALY_SCORE_THRESHOLD,
         "max_remediation_attempts": ai_config.MAX_REMEDIATION_ATTEMPTS,
+        # Recorded so an ablation run's numbers can never be mistaken for the shipped
+        # configuration's. Both are False/True-by-default in a normal run.
+        "retrieval_enabled": ai_config.RETRIEVAL_ENABLED,
+        "rag_may_override_signature": ai_config.RAG_MAY_OVERRIDE_SIGNATURE,
+        "ablation": (
+            "no_retrieval" if not ai_config.RETRIEVAL_ENABLED
+            else "rag_override" if ai_config.RAG_MAY_OVERRIDE_SIGNATURE
+            else "none"
+        ),
         "recovery_metrics_measurable": mode == "live",
         "recovery_metrics_note": (
             "Recovery Success Rate and False Recovery Rate require a genuinely active fault to "

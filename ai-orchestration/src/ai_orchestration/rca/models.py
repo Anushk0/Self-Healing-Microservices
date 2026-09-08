@@ -17,6 +17,11 @@ DeterminationMethod = Literal[
     "metric_signature+rag_disagreement",    # signature match, but retrieved incidents disagree
     "rag_only",                             # no signature match; weak suggestion from retrieval alone
     "fallback_unknown",                     # no signature match and no useful retrieval evidence
+    # Week 16 ABLATION ONLY - never produced by the shipped configuration. Retrieval was allowed to
+    # override a signature match (config.RAG_MAY_OVERRIDE_SIGNATURE), reconstructing the
+    # conventional RAG-first design so its cost can be measured. Seeing this value in a result means
+    # that result came from an ablation run, not from the system as designed.
+    "rag_override",
 ]
 
 
