@@ -58,6 +58,49 @@ normal Kubernetes self-healing, not a failure - it stabilises on its own.
 
 ## Tests
 
+This is the only service whose tests need a real database — 18 tests across
+`LedgerServiceTest` (7), `DbLockFaultServiceTest` (6) and `LedgerControllerTest` (5). They run
+against PostgreSQL rather than an in-memory database on purpose: the behaviour under test is
+`SELECT ... FOR UPDATE` row locking and HikariCP pool exhaustion, neither of which H2 reproduces
+faithfully.
+
+Requirements: **JDK 17** (see the root README — the build does not work on JDK 23), Maven, and a
+PostgreSQL reachable with a `ledger_db_test` database. Schema is created automatically
+(`ddl-auto: create-drop`).
+
+### Option A — throwaway instance (recommended; leaves any existing PostgreSQL alone)
+
+Creates a temporary cluster on port **5433**, so a PostgreSQL already running on 5432 is untouched
+and no superuser password is needed — `initdb` makes you the superuser of the new cluster.
+
 ```bash
-mvn test   # requires the ledger_db_test database to exist
+PGBIN="/c/Program Files/PostgreSQL/18/bin"     # adjust version
+TMP=/tmp/pgdata-ledger-test
+
+"$PGBIN/initdb" -D "$TMP" -U aiops --auth=trust -E UTF8
+"$PGBIN/pg_ctl" -D "$TMP" -l /tmp/pg.log -o "-p 5433 -c listen_addresses=localhost" start
+"$PGBIN/psql" -h localhost -p 5433 -U aiops -d postgres -c "CREATE DATABASE ledger_db_test;"
+
+TEST_DB_URL=jdbc:postgresql://localhost:5433/ledger_db_test \
+TEST_DB_USERNAME=aiops TEST_DB_PASSWORD= \
+  mvn test
+
+"$PGBIN/pg_ctl" -D "$TMP" stop -m fast && rm -rf "$TMP"
 ```
+
+### Option B — an existing local PostgreSQL
+
+Needs superuser access once, to create the role and database the tests expect:
+
+```bash
+psql -U postgres -c "CREATE ROLE aiops WITH LOGIN PASSWORD 'aiops-dev-password' CREATEDB;"
+psql -U postgres -c "CREATE DATABASE ledger_db_test OWNER aiops;"
+mvn test          # defaults already point at localhost:5432/ledger_db_test as user aiops
+```
+
+`TEST_DB_URL`, `TEST_DB_USERNAME` and `TEST_DB_PASSWORD` override the defaults in
+`src/test/resources/application.yml` if your setup differs.
+
+### The other three services
+
+`auth-service`, `payment-service` and `notification-service` need no database — plain `mvn test`.

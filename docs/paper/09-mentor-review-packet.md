@@ -78,11 +78,10 @@ goes in §5.3; otherwise it should be dropped rather than cited vaguely.
 Stated so the review is not falsely reassured:
 
 - **Nobody has read the three dataset-methodology citations.** See §2.5.
-- **The Java test suite is now partially verified in this environment.** Maven and a Temurin JDK 17
-  were installed for a final audit: auth-service (12 tests), notification-service (4) and
-  payment-service (13) all pass — 29 of the 47. `ledger-service` compiles cleanly including its test
-  sources, but its 18 tests need a live PostgreSQL instance and were not run. The "47 Java tests"
-  figure is confirmed by count (29 + 18).
+- **The Java test suite is fully verified in this environment.** Maven, a Temurin JDK 17 and a
+  throwaway PostgreSQL instance were set up for the final audit: auth-service (12),
+  notification-service (4), payment-service (13) and ledger-service (18) — **all 47 pass**. The
+  procedure for the database-backed ones is in `ledger-service/README.md`.
 - **The services do not build on JDK 23** — a Lombok/JDK incompatibility, documented in the root
   README's prerequisites. The code is correct; the toolchain is the constraint.
 - **No screen recording of the demo exists** (`07-demo-runbook.md` §3 has the steps to make one).

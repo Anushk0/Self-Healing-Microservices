@@ -1,8 +1,12 @@
+# Test datasource. Overridable by environment variable, matching the pattern the main
+# application.yml already uses (${DB_URL:...}) - so the suite can be pointed at a throwaway
+# PostgreSQL on any port without editing this file. See ledger-service/README.md "Running the
+# tests" for a copy-paste throwaway instance that leaves an existing local PostgreSQL alone.
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/ledger_db_test
-    username: aiops
-    password: aiops-dev-password
+    url: ${TEST_DB_URL:jdbc:postgresql://localhost:5432/ledger_db_test}
+    username: ${TEST_DB_USERNAME:aiops}
+    password: ${TEST_DB_PASSWORD:aiops-dev-password}
   jpa:
     hibernate:
       ddl-auto: create-drop

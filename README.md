@@ -19,8 +19,9 @@ rules and weekly roadmap.
 > generated getters that look like code bugs but are not. Build with JDK 17, or use the Dockerfiles,
 > which pin it already.
 >
-> Verified on JDK 17 (Temurin 17.0.13): auth 12 tests, notification 4, payment 13 — all passing;
-> ledger compiles including test sources, and its 18 tests require a PostgreSQL instance.
+> Verified on JDK 17 (Temurin 17.0.13): **all 47 Java tests pass** — auth 12, notification 4,
+> payment 13, ledger 18. Ledger's need a PostgreSQL; `ledger-service/README.md` gives a copy-paste
+> throwaway instance that leaves any existing local PostgreSQL untouched.
 
 ## Status
 
