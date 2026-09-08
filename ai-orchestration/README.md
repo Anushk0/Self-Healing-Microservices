@@ -504,6 +504,82 @@ Three properties worth naming for the paper:
   multi-agent deterministic ladder, so Week 12 must compare a single attempt per incident for both
   arms to stay fair (`_route_after_verification_no_retry`).
 
+## Week 12 architecture: the evaluation harness
+
+`evaluation/` runs every Evaluation-set incident through both arms and records everything. Four
+design decisions carry the methodological weight:
+
+### Replaying an incident without leaking the answer (`evaluation/replay.py`)
+
+A stored incident becomes the one raw telemetry record a monitor would have seen: the **symptom**
+service's **fault-window** metrics. Two consequences are deliberate. The pipeline is handed
+payment-service telemetry for `auth-key-error` and `notification-latency` and must still name a
+different service - the capability under test. And **the self-reported fault flag is withheld**
+(`fault: None`): every service exposes `/fault-status`, which for a same-service fault is
+effectively the answer key, so including it would let either arm "diagnose" by reading a debug
+endpoint. Ground-truth labels are cross-checked against `FAULT_SERVICE_MAP`, so a mislabelled
+incident fails loudly rather than silently scoring every arm wrong.
+
+### The simulated operator (`evaluation/operator.py`)
+
+Approval stays mandatory - the graph still interrupts and still cannot proceed without a resume.
+What is simulated is who supplies the decision. The default policy **approves everything that
+reaches it**, and the alternative was rejected on purpose: approving only correct diagnoses would
+gate execution on ground truth, so recovery metrics would measure "how well does remediation work
+when the diagnosis is already known to be right". The cost is stated rather than hidden - under a
+permissive policy Approval Accuracy is definitionally equal to diagnostic accuracy and is not an
+independent measurement.
+
+### Preflight: the leakage guard is proven at measurement time (`evaluation/harness.py`)
+
+Before any number is recorded, the harness asserts feedback write-back is disabled *and* attempts a
+real write-back of an actual Evaluation incident, aborting the run unless it is refused. Unit tests
+prove the guard existed when they were written; this proves it works against the real Evaluation
+file at the moment of measuring. The result is recorded in the run artefact.
+
+Replay mode also forces dry-run execution, for a methodological reason rather than caution: a
+replayed incident has no active fault, so "resetting" it would trivially succeed and every incident
+would look recovered. **Recovery Success Rate and False Recovery Rate are therefore not measurable
+by replay** and are reported as unmeasurable with a reason - never as a meaningless 100%.
+
+### Metrics that refuse to fabricate (`evaluation/metrics.py`)
+
+Two rules: an unmeasured metric is `None` with a reason, never a number; and an abstention is scored
+separately from a wrong answer, so a system that declines to guess is not conflated with one that
+guesses badly. Accuracy is reported both over all incidents (the honest headline) and over answered
+incidents only, alongside the abstention rate. **Cross-service accuracy is reported separately**,
+because an aggregate can hide total failure on exactly the cases the dataset was built around, and
+"blamed the symptom service" counts that specific failure mode directly.
+
+Hallucination rate uses an automated, deliberately conservative proxy: a reasoning chain citing a
+*known* metric name that was absent from the evidence it was given. Unrecognised tokens are ignored,
+so ordinary prose cannot inflate it and the reported figure is a lower bound.
+
+### `evaluation/prepare.py` - training where there is no captured telemetry
+
+Week 7's normal path trains on raw per-cycle telemetry from live experiments. On a machine with no
+cluster there is none, so this module trains the same models from Memory-set incidents' own
+**NORMAL and RECOVERY phase metrics**. The Memory/Evaluation boundary is preserved exactly - the
+Evaluation file is not imported, not opened, and there is no parameter that could redirect it - and
+no fault-window data is used, so a detector still only ever learns what normal looks like. The
+honest difference: these are per-incident phase averages rather than raw observations, so the
+variance structure is smoother than live telemetry's.
+
+## An audit the literature now requires
+
+arXiv 2511.15755 (Drammeh, Nov 2025), which this project's roadmap named as its closest competitor,
+was **withdrawn by its author**: "a code audit found the multi-agent arm's action list is a source
+constant, not model output, and the scorer reads only that field."
+
+That is the natural failure mode of a deliberately-deterministic multi-agent pipeline - which this
+is. `remediation/proposer.py` *is* a hardcoded template lookup, by design and by declaration. So the
+property is asserted rather than argued: `tests/test_scored_output_is_not_constant.py` shows that
+three payment-service records differing only in their metrics produce three *different* root-cause
+services, that the conclusion is reached with no LLM call at all, and that the system abstains
+rather than emitting a default when nothing matches. See `docs/paper/05-related-work.md` §5.2,
+including the second-order disclosure that root-cause accuracy is arithmetically equal to fault-type
+accuracy for this system.
+
 ## How Weeks 10-11 feed Week 12
 
 - Both arms are compiled the same way (`build_graph()` / `build_baseline_graph()`, identical

@@ -126,6 +126,80 @@ The project uses a self-hosted local LLM via Ollama (initial candidate:
 
 ## Current status
 
+Weeks 12-14 complete (2026-09-08): the evaluation ran, and the paper sections are drafted from it.
+
+**Week 12.** `ai-orchestration/src/ai_orchestration/evaluation/` runs every Evaluation incident
+through both arms with byte-identical inputs and computes all five metric categories. Three design
+choices carry the methodological weight. The replay adapter feeds the pipeline the *symptom*
+service's fault-window telemetry and **withholds the self-reported fault flag** - `/fault-status` is
+effectively an answer key for same-service faults, so a replayed incident does not come with one.
+The simulated operator **approves everything that reaches it**, deliberately: gating execution on
+ground truth would make recovery metrics measure "how well does remediation work when the diagnosis
+is already known to be right". And before any number is recorded the harness proves the rule-22
+guard **live** against the real Evaluation file, aborting the run unless a write-back of a genuine
+Evaluation incident is refused. Metrics refuse to fabricate: an unmeasured quantity is `None` with a
+reason, never a number, and an abstention is scored separately from a wrong answer.
+
+**The result.** On 48 held-out incidents: multi-agent **100% accuracy when it answered (21/21)**
+versus 57.1% for the single-agent baseline, and on the cross-service faults the project was built
+around, **100% (9/9) versus 0% (0/9)**. The two arms were *identical* on same-service faults, so the
+entire difference is confined to incidents where the symptom service is not the faulty one.
+
+**The mechanism, which matters more than the number.** Breaking the multi-agent results down by
+determination method gives a perfect partition: all 12 same-service incidents were
+`metric_signature+rag_agreement`, and all 9 cross-service incidents were
+`metric_signature+rag_disagreement` - and all 9 were still correct. On every cross-service incident
+retrieval *disagreed with the right answer*, returning `memory-leak` incidents rooted at
+`payment-service` (the symptom service). The baseline received the same retrieved incidents and
+followed them, naming `payment-service` on all 9. So the design decision that "retrieved incidents
+are evidence, not commands" is not stylistic - it is the entire measured difference between the
+arms. Built the conventional way, the multi-agent arm would have scored 0% cross-service too.
+
+**Caveats recorded as prominently as the results.** The absolute 100% is inflated by a circularity:
+this run's corpus is fully synthetic (no cluster on this machine), and the synthetic generator's
+fault formulas and the RCA signature thresholds both derive from the same `OBSERVED_BASELINE_RANGES`
+constants, so a threshold matcher was evaluated on data generated to exceed those thresholds. The
+*comparison* is unaffected (both arms got identical inputs) and the baseline's failure is not an
+artefact, but the absolute figure is not a capability claim. Detection - not diagnosis - was the
+binding constraint: both arms abstained on 56.2% of incidents because the shared Isolation Forest
+surfaced only 21 of 48, which is the saturation limitation from Week 10 showing up as a system
+outcome. MTTR, Recovery Success Rate and False Recovery Rate are **not measurable by replay** and
+are reported as such. And the multi-agent arm's LLM narration timed out on 20 of 21 incidents while
+diagnostic accuracy stayed at 100% - an unplanned but direct demonstration that the deterministic
+conclusion does not depend on the model.
+
+**A metric bug was found and fixed mid-week**: "detection latency" was measuring time-to-first-pause
+(including retrieval, RCA and LLM narration), overstating it by orders of magnitude. Detection is
+now timed on the detection path alone, outside the graph, and time-to-first-pause is reported
+separately.
+
+**Weeks 13-14.** `docs/paper/` contains Dataset Construction, Methodology, Results, Discussion,
+Related Work and five Mermaid figures, plus `docs/evaluation/` (RESULTS.md, metrics.json,
+per-incident CSV, raw run, three PNG charts).
+
+**A finding that changes the Related Work section.** arXiv 2511.15755 (Drammeh), which this roadmap
+named as the closest direct competitor whose differentiation "cannot be skipped", has been
+**withdrawn by its author** - verified on the arXiv abstract page. The withdrawal notice states that
+"a code audit found the multi-agent arm's action list is a source constant, not model output, and
+the scorer reads only that field." That is the natural failure mode of a deliberately-deterministic
+multi-agent pipeline, which this project is - `remediation/proposer.py` *is* a hardcoded template
+lookup. So §5.2 of the related-work section carries an empirical self-audit showing the scored
+quantity varies with input telemetry (three payment-service records differing only in metrics yield
+three different root causes), backed by a permanent regression test
+(`tests/test_scored_output_is_not_constant.py`). A second-order disclosure is made there too: once
+the fault type is known, `root_cause_service` follows from a fixed map that the ground-truth labels
+also use, so root-cause accuracy is arithmetically equal to fault-type accuracy - one capability
+reported two ways. Separately, **"VeriOps-Agent" could not be located**; two substitute papers were
+found and are flagged for reading before citation.
+
+67 new tests (283 across the three Python packages, 0 failures). Docker Desktop would not start on
+this machine, so there is still no cluster: the dataset was regenerated here as 68 synthetic
+incidents (20 Memory / 48 Evaluation, seed 42, zero overlap), detectors were trained from Memory-set
+NORMAL/RECOVERY phase averages via `evaluation/prepare.py` (which never opens the Evaluation file),
+and the evaluation ran in replay mode. Running `--mode live` on a machine with a cluster fills in
+the three unmeasured metrics with no code change. See `docs/paper/README.md` for the five items
+still needing your input before submission. Waiting for explicit instruction to begin Week 15.
+
 Weeks 10-11 complete (2026-09-08): the pipeline now closes the loop and has a comparison arm.
 
 **Week 10.** `execution/` is the only code in this project that changes the running system, and

@@ -5,6 +5,36 @@ rules and weekly roadmap.
 
 ## Status
 
+Weeks 12-14 complete: the evaluation ran and the paper sections are drafted from it.
+
+**The result.** On 48 held-out incidents, the multi-agent pipeline was correct on **100% of the
+incidents it answered (21/21)** versus 57.1% for the single-agent baseline — and on the
+cross-service faults this project was built around (where the service showing the symptom is not the
+service at fault), **100% (9/9) versus 0% (0/9)**. The two arms were *identical* on same-service
+faults, so the whole difference sits in exactly the cases the dataset was designed to isolate.
+
+**Why.** On every cross-service incident, retrieval disagreed with the correct answer — it returned
+incidents rooted at the symptom service. The baseline followed it and named the symptom service all
+9 times; the multi-agent pipeline did not, because its architecture forbids retrieval from
+overriding a signature match. The design rule "retrieved incidents are evidence, not commands" is
+the entire measured difference between the arms.
+
+**Stated as prominently as the result:** this run's corpus is fully synthetic (no cluster on the run
+machine), and the diagnostic thresholds and the synthetic generator share constants — so the
+absolute 100% is bounded by that circularity, though the comparison is not. Detection, not
+diagnosis, was the real ceiling: both arms abstained on 56.2% of incidents. MTTR, Recovery Success
+Rate and False Recovery Rate are **not measurable by replay** and are reported as unmeasurable
+rather than as a fabricated 100%.
+
+**A finding that changes the related-work section:** arXiv 2511.15755, named in the roadmap as the
+closest competitor, has been **withdrawn by its author** after an audit found its multi-agent arm's
+action list was a source constant rather than model output. Since that is the natural failure mode
+of this architecture too, `docs/paper/05-related-work.md` §5.2 carries an empirical self-audit
+proving this system's scored output varies with input telemetry, with a permanent regression test.
+
+Artefacts: `docs/evaluation/` (results, metrics, per-incident CSV, charts) and `docs/paper/`
+(dataset construction, methodology, results, discussion, related work, figures). 283 tests pass.
+
 Weeks 10-11 complete: the pipeline now closes the loop and has a comparison arm.
 **Week 10** executes an approved action against the running system (fault reset over HTTP, or a pod
 restart via the Kubernetes API - three fail-closed gates, no generic command path), then re-observes
