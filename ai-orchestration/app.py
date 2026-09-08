@@ -51,7 +51,28 @@ ai_config.ensure_sibling_packages_importable()
 from dataset_tools import config as dt_config  # noqa: E402
 from dataset_tools.synthetic_model import OBSERVED_BASELINE_RANGES  # noqa: E402
 
+from ai_orchestration.evaluation import replay as _replay  # noqa: E402
+
 st.set_page_config(page_title="AIOps Human Approval Console", layout="wide")
+
+# Evaluation incidents the currently-trained detectors actually flag, established by scoring all 48
+# through the same feature extractor and detector the pipeline uses (see docs/evaluation/). Listed
+# explicitly rather than recomputed on every page load, which would score 48 incidents per rerun.
+# Regenerate after retraining detectors - the sidebar's detector inventory tells you when that
+# happened, and a stale entry only mislabels the tick, never changes what the pipeline does.
+KNOWN_DETECTED_INCIDENTS = {
+    "inc-0011", "inc-0010",              # auth-key-error   (cross-service)
+    "inc-0067", "inc-0065",              # notification-latency (cross-service) - the headline demo
+    "inc-0026", "inc-0024",              # db-lock
+    "inc-0036", "inc-0051", "inc-0048", "inc-0038",  # memory-leak
+}
+
+
+@st.cache_data(show_spinner=False)
+def _load_evaluation_incidents_cached() -> list[dict]:
+    """Cached so switching arms or clicking Approve does not re-read the Evaluation file. Reads
+    only the Evaluation set - this console never opens the Memory file."""
+    return _replay.load_evaluation_incidents()
 
 
 # --- Session bootstrap -------------------------------------------------------------------------
@@ -253,12 +274,53 @@ with st.sidebar:
         st.rerun()
 
 st.header("1. Provide a telemetry record")
-input_mode = st.radio("Source", ["Built-in sample", "Paste raw JSON"], horizontal=True)
+input_mode = st.radio(
+    "Source", ["Evaluation incident (real)", "Built-in sample", "Paste raw JSON"], horizontal=True,
+)
 
 record: dict | None = None
-if input_mode == "Built-in sample":
+if input_mode == "Evaluation incident (real)":
+    # Replays an actual held-out Evaluation incident through the same adapter the Week 12 harness
+    # uses. This is the option to demo with: the synthetic built-in samples below are *not*
+    # detected by the real trained detectors (every one scores below the threshold - a consequence
+    # of the Isolation Forest saturation documented in the sidebar), so they cannot exercise the
+    # anomaly branch without moving the threshold. These can.
+    try:
+        incidents = _load_evaluation_incidents_cached()
+    except Exception as exc:  # noqa: BLE001 - dataset may not be built yet
+        incidents = []
+        st.warning(f"Could not load the Evaluation set ({exc}). Build the dataset first.")
+
+    if incidents:
+        detected_first = sorted(
+            incidents, key=lambda i: (i["incident_id"] not in KNOWN_DETECTED_INCIDENTS, i["incident_id"])
+        )
+        def _label(inc: dict) -> str:
+            mark = "✓ detected" if inc["incident_id"] in KNOWN_DETECTED_INCIDENTS else "  not detected"
+            cross = "cross-service" if inc["root_cause_service"] != inc["symptom_service"] else "same-service"
+            return (f"{mark} | {inc['incident_id']} | {inc['fault_type']} | {cross} "
+                    f"| cause={inc['root_cause_service']}")
+        chosen = st.selectbox("Evaluation incident", detected_first, format_func=_label)
+        st.caption(
+            "Ticked incidents are the ones the current detectors actually flag "
+            f"({len(KNOWN_DETECTED_INCIDENTS)} of {len(incidents)}). The rest are shown so the "
+            "detection limitation is visible rather than hidden - selecting one will correctly "
+            "produce 'normal'."
+        )
+        try:
+            record = _replay.incident_to_raw_record(chosen)
+            st.json(record, expanded=False)
+        except Exception as exc:  # noqa: BLE001
+            st.error(f"Could not replay {chosen['incident_id']}: {exc}")
+
+elif input_mode == "Built-in sample":
     preset_name = st.selectbox("Sample", list(SAMPLE_PRESETS))
     record = SAMPLE_PRESETS[preset_name]()
+    st.warning(
+        "These synthetic samples are **not detected** by the real trained detectors — each scores "
+        "below the threshold. Use *Evaluation incident (real)* above for a working demo, or lower "
+        "the anomaly threshold in the sidebar."
+    )
     st.json(record, expanded=False)
 else:
     import json

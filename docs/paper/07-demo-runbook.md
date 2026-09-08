@@ -127,8 +127,13 @@ Live demos fail. Decide in advance:
 
 - **Ollama times out** (it did on 9 of 10 incidents in the evaluation) — this is *fine* and on-message: the deterministic conclusion is unaffected. Say so and continue.
 - **A pod isn't ready** — have the recording ready to cut to.
-- **Detection doesn't fire** on your chosen incident — known and expected (20.8% rate). Have a
-  pre-selected incident ID that you have already confirmed detects.
+- **Detection doesn't fire** on your chosen incident — known and expected (20.8% rate). Use the
+  console's **"Evaluation incident (real)"** source, which ticks the 10 of 48 incidents the trained
+  detectors actually flag. For the cross-service story use **`inc-0067`** or **`inc-0065`**
+  (notification-latency) — both verified to detect and to be diagnosed as `notification-service`
+  while the symptom sits on payment-service. The synthetic *built-in samples* are **not** detected
+  by the real detectors and the console says so; they are kept only to exercise the flow with a
+  demo detector or a lowered threshold.
 - **Everything fails** — the artefacts stand alone: `docs/evaluation/RESULTS.md` and the three
   figures make the argument without a live system.
 
