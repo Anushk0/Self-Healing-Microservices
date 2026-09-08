@@ -203,7 +203,7 @@
       "ai": {
         "unsupported_significance_rate": 0.0,
         "incidents_with_unsupported_significance_claims": 0,
-        "unsupported_significance_note": "Cited a real metric value that lies inside its documented baseline range while describing it as elevated. Catches fabricated *significance*, which the metric-name check below cannot - and which is the failure mode that actually produced wrong diagnoses in this run.",
+        "unsupported_significance_note": "Cited a real metric value that lies inside its documented baseline range while describing it as elevated. Catches fabricated *significance*, which the metric-name check below cannot. It scores the justification, not the answer: a flagged incident may still have been diagnosed correctly, and in this run it was.",
         "wall_clock_seconds_per_incident_mean": 8.519,
         "llm_calls_per_incident_mean": 0.4167,
         "llm_calls_total": 20,

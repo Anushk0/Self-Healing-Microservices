@@ -110,7 +110,7 @@ suggest:
   systems were identical, and the multi-agent design cost roughly 4.0× the wall clock. The benefit is
   confined to cross-service diagnosis.
 - **Not that the system achieves high accuracy in deployment.** Measured over all incidents rather
-  than answered ones, accuracy was 20.8%, because the detector surfaced fewer than half of them.
+  than answered ones, accuracy was 20.8%, because the detector surfaced only 10 of the 48.
 - **Not that the absolute accuracy figures generalise.** They were obtained on a synthetic corpus
   whose generator shares constants with the diagnostic thresholds; the comparative findings survive
   this, the absolute ones do not (§6.2).

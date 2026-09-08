@@ -1,0 +1,414 @@
+{
+  "run": {
+    "started_at": "2026-09-08T17:21:23.972926+00:00",
+    "finished_at": "2026-09-08T17:30:31.716145+00:00",
+    "mode": "replay",
+    "operator_policy": "permissive",
+    "arms": [
+      "multi_agent",
+      "single_agent"
+    ]
+  },
+  "environment": {
+    "mode": "replay",
+    "python": "3.12.2",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "ollama_model": "llama3.2:3b",
+    "ollama_reachable": true,
+    "trained_detectors": [
+      "auth-service",
+      "ledger-service",
+      "notification-service",
+      "payment-service"
+    ],
+    "execution_dry_run": true,
+    "feedback_enabled": false,
+    "anomaly_score_threshold": 0.0,
+    "max_remediation_attempts": 3,
+    "retrieval_enabled": true,
+    "rag_may_override_signature": false,
+    "ablation": "none",
+    "recovery_metrics_measurable": false,
+    "recovery_metrics_note": "Recovery Success Rate and False Recovery Rate require a genuinely active fault to remediate. In replay mode nothing is executed (dry run), so they are not measurable and are reported as such rather than as a meaningless 100%.",
+    "operator_decisions": [
+      {
+        "incident_id": "inc-0011",
+        "decision": "approved",
+        "action_category": "restore_configuration",
+        "target_service": "auth-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0011",
+        "decision": "approved",
+        "action_category": "restart_service",
+        "target_service": "payment-service",
+        "risk_level": "high"
+      },
+      {
+        "incident_id": "inc-0010",
+        "decision": "approved",
+        "action_category": "restore_configuration",
+        "target_service": "auth-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0010",
+        "decision": "approved",
+        "action_category": "restart_service",
+        "target_service": "payment-service",
+        "risk_level": "high"
+      },
+      {
+        "incident_id": "inc-0026",
+        "decision": "approved",
+        "action_category": "release_resources",
+        "target_service": "ledger-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0026",
+        "decision": "approved",
+        "action_category": "release_resources",
+        "target_service": "ledger-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0024",
+        "decision": "approved",
+        "action_category": "release_resources",
+        "target_service": "ledger-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0024",
+        "decision": "approved",
+        "action_category": "release_resources",
+        "target_service": "ledger-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0036",
+        "decision": "approved",
+        "action_category": "reset_fault_configuration",
+        "target_service": "payment-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0036",
+        "decision": "approved",
+        "action_category": "release_resources",
+        "target_service": "payment-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0051",
+        "decision": "approved",
+        "action_category": "reset_fault_configuration",
+        "target_service": "payment-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0051",
+        "decision": "approved",
+        "action_category": "release_resources",
+        "target_service": "payment-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0048",
+        "decision": "approved",
+        "action_category": "reset_fault_configuration",
+        "target_service": "payment-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0048",
+        "decision": "approved",
+        "action_category": "release_resources",
+        "target_service": "payment-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0038",
+        "decision": "approved",
+        "action_category": "investigate_manually",
+        "target_service": "payment-service",
+        "risk_level": "low"
+      },
+      {
+        "incident_id": "inc-0038",
+        "decision": "approved",
+        "action_category": "release_resources",
+        "target_service": "payment-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0067",
+        "decision": "approved",
+        "action_category": "reset_fault_configuration",
+        "target_service": "notification-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0067",
+        "decision": "approved",
+        "action_category": "release_resources",
+        "target_service": "payment-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0065",
+        "decision": "approved",
+        "action_category": "reset_fault_configuration",
+        "target_service": "notification-service",
+        "risk_level": "medium"
+      },
+      {
+        "incident_id": "inc-0065",
+        "decision": "approved",
+        "action_category": "release_resources",
+        "target_service": "payment-service",
+        "risk_level": "medium"
+      }
+    ]
+  },
+  "dataset": {
+    "evaluation_file": "C:\\Users\\agraw\\OneDrive\\Desktop\\capstone\\aiops-capstone\\dataset-tools\\data\\evaluation\\evaluation_incidents.jsonl",
+    "evaluation_incident_count": 48,
+    "fault_type_counts": {
+      "auth-key-error": 12,
+      "db-lock": 12,
+      "memory-leak": 12,
+      "notification-latency": 12
+    },
+    "data_source_counts": {
+      "synthetic": 48
+    },
+    "cross_service_incident_count": 24
+  },
+  "preflight": {
+    "feedback_disabled": true,
+    "rule_22_guard_verified_live": true,
+    "rule_22_probe_incident_id": "inc-0014",
+    "rule_22_refusal_reason": "Incident 'inc-0014' belongs to the Evaluation set. Evaluation incidents must never enter RAG memory (CLAUDE.md rule 22), so this run was not written back."
+  },
+  "per_arm": {
+    "multi_agent": {
+      "performance": {
+        "incidents_total": 48,
+        "answered": 10,
+        "abstained": 38,
+        "errored": 0,
+        "abstention_rate": 0.7917,
+        "accuracy_over_all_incidents": 0.2083,
+        "accuracy_when_answered": 1.0,
+        "precision_macro": 1.0,
+        "recall_macro": 1.0,
+        "f1_macro": 1.0,
+        "fault_type_accuracy_when_answered": 1.0,
+        "per_class": {
+          "auth-service": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 2.0
+          },
+          "ledger-service": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 2.0
+          },
+          "notification-service": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 2.0
+          },
+          "payment-service": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 4.0
+          },
+          "accuracy": 1.0,
+          "macro avg": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 10.0
+          },
+          "weighted avg": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 10.0
+          }
+        },
+        "labels": [
+          "auth-service",
+          "ledger-service",
+          "notification-service",
+          "payment-service"
+        ],
+        "cross_service_accuracy": 1.0,
+        "same_service_accuracy": 1.0,
+        "cross_service_count": 4,
+        "blamed_symptom_service_on_cross_service_incidents": 0
+      },
+      "system": {
+        "detection_latency_seconds_mean": 0.0118,
+        "detection_latency_seconds_median": 0.010526,
+        "time_to_first_pause_seconds_mean": 8.9249,
+        "anomaly_detection_rate": 0.2083,
+        "mttr_seconds_mean": null,
+        "mttr_note": "Not measurable in replay mode: a replayed incident has no active fault, so nothing was executed (dry run) and there is no remediation outcome to verify. Requires mode='live'.",
+        "executions_attempted": 0,
+        "recovery_success_rate": null,
+        "recovery_success_note": "Not measurable in replay mode: a replayed incident has no active fault, so nothing was executed (dry run) and there is no remediation outcome to verify. Requires mode='live'.",
+        "false_recovery_rate": null,
+        "false_recovery_note": "Not measurable in replay mode: a replayed incident has no active fault, so nothing was executed (dry run) and there is no remediation outcome to verify. Requires mode='live'.",
+        "remediation_attempts_mean": 0.1875
+      },
+      "ai": {
+        "unsupported_significance_rate": 0.0,
+        "incidents_with_unsupported_significance_claims": 0,
+        "unsupported_significance_note": "Cited a real metric value that lies inside its documented baseline range while describing it as elevated. Catches fabricated *significance*, which the metric-name check below cannot - and which is the failure mode that actually produced wrong diagnoses in this run.",
+        "wall_clock_seconds_per_incident_mean": 8.9267,
+        "llm_calls_per_incident_mean": 0.4167,
+        "llm_calls_total": 20,
+        "token_cost_substitution_note": "Token cost is not applicable to a self-hosted Ollama model; wall-clock inference time and LLM call count are reported in its place (documented methodology substitution).",
+        "incidents_with_reasoning_text": 1,
+        "hallucination_rate": 0.0,
+        "hallucination_note": "Automated proxy: a reasoning chain citing a known metric name that was absent from the evidence given to it. Conservative by construction - unrecognised tokens are ignored, so this is a lower bound, and it does not attempt to judge semantic correctness.",
+        "incidents_with_parse_issues": 0,
+        "parse_issue_rate": 0.0
+      },
+      "human": {
+        "incidents_reaching_human_approval": 10,
+        "approved": 10,
+        "rejected": 0,
+        "approval_accuracy": 1.0,
+        "approval_accuracy_note": "Under the 'permissive' simulated-operator policy this is definitionally equal to diagnostic accuracy among proposals that reached approval, so it is not an independent measurement. Reported for completeness and because it makes Unsafe Action Prevention interpretable - see evaluation/operator.py.",
+        "unsafe_actions_prevented_by_safety_validator": 0,
+        "unsafe_action_prevention_rate": 0.0,
+        "safety_violation_reasons": [],
+        "executions_without_approval": 0
+      }
+    },
+    "single_agent": {
+      "performance": {
+        "incidents_total": 48,
+        "answered": 10,
+        "abstained": 38,
+        "errored": 0,
+        "abstention_rate": 0.7917,
+        "accuracy_over_all_incidents": 0.125,
+        "accuracy_when_answered": 0.6,
+        "precision_macro": 0.375,
+        "recall_macro": 0.5,
+        "f1_macro": 0.4167,
+        "fault_type_accuracy_when_answered": 0.6,
+        "per_class": {
+          "auth-service": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 2.0
+          },
+          "ledger-service": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 2.0
+          },
+          "notification-service": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 2.0
+          },
+          "payment-service": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "f1-score": 0.6666666666666666,
+            "support": 4.0
+          },
+          "accuracy": 0.6,
+          "macro avg": {
+            "precision": 0.375,
+            "recall": 0.5,
+            "f1-score": 0.41666666666666663,
+            "support": 10.0
+          },
+          "weighted avg": {
+            "precision": 0.4,
+            "recall": 0.6,
+            "f1-score": 0.4666666666666666,
+            "support": 10.0
+          }
+        },
+        "labels": [
+          "auth-service",
+          "ledger-service",
+          "notification-service",
+          "payment-service"
+        ],
+        "cross_service_accuracy": 0.0,
+        "same_service_accuracy": 1.0,
+        "cross_service_count": 4,
+        "blamed_symptom_service_on_cross_service_incidents": 4
+      },
+      "system": {
+        "detection_latency_seconds_mean": 0.0118,
+        "detection_latency_seconds_median": 0.010526,
+        "time_to_first_pause_seconds_mean": 2.3909,
+        "anomaly_detection_rate": 0.2083,
+        "mttr_seconds_mean": null,
+        "mttr_note": "Not measurable in replay mode: a replayed incident has no active fault, so nothing was executed (dry run) and there is no remediation outcome to verify. Requires mode='live'.",
+        "executions_attempted": 0,
+        "recovery_success_rate": null,
+        "recovery_success_note": "Not measurable in replay mode: a replayed incident has no active fault, so nothing was executed (dry run) and there is no remediation outcome to verify. Requires mode='live'.",
+        "false_recovery_rate": null,
+        "false_recovery_note": "Not measurable in replay mode: a replayed incident has no active fault, so nothing was executed (dry run) and there is no remediation outcome to verify. Requires mode='live'.",
+        "remediation_attempts_mean": 0.2083
+      },
+      "ai": {
+        "unsupported_significance_rate": 0.0,
+        "incidents_with_unsupported_significance_claims": 0,
+        "unsupported_significance_note": "Cited a real metric value that lies inside its documented baseline range while describing it as elevated. Catches fabricated *significance*, which the metric-name check below cannot - and which is the failure mode that actually produced wrong diagnoses in this run.",
+        "wall_clock_seconds_per_incident_mean": 2.3925,
+        "llm_calls_per_incident_mean": 0.2083,
+        "llm_calls_total": 10,
+        "token_cost_substitution_note": "Token cost is not applicable to a self-hosted Ollama model; wall-clock inference time and LLM call count are reported in its place (documented methodology substitution).",
+        "incidents_with_reasoning_text": 10,
+        "hallucination_rate": 0.0,
+        "hallucination_note": "Automated proxy: a reasoning chain citing a known metric name that was absent from the evidence given to it. Conservative by construction - unrecognised tokens are ignored, so this is a lower bound, and it does not attempt to judge semantic correctness.",
+        "incidents_with_parse_issues": 0,
+        "parse_issue_rate": 0.0
+      },
+      "human": {
+        "incidents_reaching_human_approval": 10,
+        "approved": 10,
+        "rejected": 0,
+        "approval_accuracy": 0.6,
+        "approval_accuracy_note": "Under the 'permissive' simulated-operator policy this is definitionally equal to diagnostic accuracy among proposals that reached approval, so it is not an independent measurement. Reported for completeness and because it makes Unsafe Action Prevention interpretable - see evaluation/operator.py.",
+        "unsafe_actions_prevented_by_safety_validator": 0,
+        "unsafe_action_prevention_rate": 0.0,
+        "safety_violation_reasons": [],
+        "executions_without_approval": 0
+      }
+    }
+  },
+  "collaboration": {
+    "multi_agent_seconds_mean": 8.9267,
+    "single_agent_seconds_mean": 2.3925,
+    "multi_agent_relative_overhead": 2.7311,
+    "note": "Both arms share detection, retrieval and all downstream nodes; the difference is the diagnostic step (deterministic signature matching plus an optional LLM narrative, versus one LLM call that must produce the whole answer)."
+  },
+  "infrastructure": {
+    "available": false,
+    "reason": "No Prometheus URL supplied. Infrastructure metrics require the deployed monitoring stack (kubectl port-forward svc/prometheus 9090), which is not part of a replay-only evaluation environment."
+  }
+}

@@ -130,9 +130,12 @@ def test_ordinary_prose_cannot_inflate_the_hallucination_rate():
 
 def test_claiming_a_baseline_range_value_is_elevated_is_flagged():
     """The stronger hallucination measure, added after the metric-name check proved too weak on the
-    real run: the baseline twice justified "memory leak" by citing heap values that sit inside
+    real run: the baseline justified "memory leak" by citing heap values that sit inside
     payment-service's documented 30-45 MB normal range. The metric was real; its significance was
-    invented, and the weaker check cannot see that."""
+    invented, and the weaker check cannot see that.
+
+    The value below is a fixture, not a quotation from the reported run - see
+    test_paper_claims_match_artefacts.py for the checks tied to the actual run artefacts."""
     result = _result(
         reasoning="The JVM heap usage increase (jvm_memory_used_bytes: 44984562.9) suggests a memory leak.",
         raw_result={"service": "payment-service",

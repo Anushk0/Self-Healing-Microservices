@@ -23,12 +23,12 @@ and any result carrying `determination_method="rag_override"` came from an ablat
 | Metric | Multi-agent | Multi-agent *no RAG* | Single-agent | Single-agent *no RAG* |
 |---|---|---|---|---|
 | Accuracy (all incidents) | 20.8% | **20.8%** | 12.5% | **6.3%** |
-| Accuracy (when answered) | 100% | **100%** | 60.0% | **15.8%** |
-| **Cross-service accuracy** | 100% | **100%** | 0% | **33.3%** |
-| **Same-service accuracy** | 100% | **100%** | 100% | **0%** |
-| Blamed the symptom service | 0 | **0** | 9 | **2** |
-| F1 (macro) | 1.00 | **1.00** | 0.40 | **0.09** |
-| Incidents answered | 21 | 21 | 21 | 19 |
+| Accuracy (when answered) | 100% | **100%** | 60.0% | **30.0%** |
+| **Cross-service accuracy** | 100% | **100%** | 0% | **50.0%** |
+| **Same-service accuracy** | 100% | **100%** | 100% | **16.7%** |
+| Blamed the symptom service | 0 | **0** | 4 | **0** |
+| F1 (macro) | 1.00 | **1.00** | 0.42 | **0.18** |
+| Incidents answered | 10 | 10 | 10 | 10 |
 
 ### Finding A0 — one incident where "identical score" hides a changed mechanism
 
@@ -74,16 +74,17 @@ This ablation shows retrieval is inert *under these conditions*, not that it is 
 
 The baseline's numbers move dramatically, and in opposite directions:
 
-- **Same-service accuracy collapses from 100% to 0%.**
-- **Cross-service accuracy improves from 0% to 33.3%.**
-- Symptom-service blaming falls from 4 of 4 to 2.
-- Overall accuracy falls from 60.0% to 15.8% when answered.
+- **Same-service accuracy collapses from 100% to 16.7%** (1 of 6).
+- **Cross-service accuracy improves from 0% to 50.0%** (2 of 4).
+- Symptom-service blaming falls from 4 of 4 to **0 of 4**.
+- Overall accuracy falls from 60.0% to 30.0% when answered.
 
 The coherent reading is that **retrieval was substituting for reasoning.** With precedent available,
 the model pattern-matches to it: that is exactly right on same-service faults (where the retrieved
 incident's root cause *is* the symptom service) and exactly wrong on cross-service ones (where it
-isn't). Remove the precedent and the model has no reliable basis at all — it loses the easy cases
-entirely — but it also stops being systematically dragged toward the symptom service.
+isn't). Remove the precedent and the model has no reliable basis at all — it keeps just 1 of the 6
+same-service incidents it previously got right — but it also stops being systematically dragged
+toward the symptom service, blaming it on none of the four rather than all four.
 
 This is a more interesting result than either "RAG helps" or "RAG hurts". For an LLM-first design,
 **retrieval determines the answer**, so retrieval's blind spots become the system's blind spots.
@@ -100,7 +101,7 @@ by construction, so removing it changes confidence labels; in the single-agent b
 
 The prediction registered before this run: because retrieval disagreed with the correct answer on all
 four cross-service incidents and proposed `payment-service` each time, allowing it to win those
-disagreements should collapse cross-service accuracy from 100% toward 0%, while leaving the twelve
+disagreements should collapse cross-service accuracy from 100% toward 0%, while leaving the six
 same-service incidents untouched (retrieval already agrees there, so there is nothing to override).
 
 **The result matches the prediction exactly, and then goes further than it.**
@@ -111,15 +112,15 @@ same-service incidents untouched (retrieval already agrees there, so there is no
 | Accuracy (when answered) | 100% | **60.0%** | **60.0%** |
 | **Cross-service accuracy** | 100% | **0%** | **0%** |
 | Same-service accuracy | 100% | 100% | 100% |
-| Blamed the symptom service | 0 | **9** | **9** |
+| Blamed the symptom service | 0 | **4** | **4** |
 | F1 (macro) | 1.00 | **0.4167** | **0.4167** |
-| Incidents answered | 21 | 21 | 21 |
+| Incidents answered | 10 | 10 | 10 |
 
 ### Finding B1 — removing the constraint reproduces the baseline *exactly*
 
 Not approximately. **Every metric in the override column equals the single-agent baseline's value**,
 to four decimal places, including the F1 macro (0.4167) and the count of symptom-service
-attributions (9). The determination-method breakdown shows why: 5 `rag_agreement` (unchanged) and
+attributions (4). The determination-method breakdown shows why: 5 `rag_agreement` (unchanged) and
 **4 `rag_override`** — precisely the four cross-service incidents, each flipped to retrieval's
 answer.
 

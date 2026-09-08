@@ -11,7 +11,7 @@ The headline comparison is stark and, unusually, has a single legible cause.
 |---|---|---|
 | Accuracy when it answered | **100%** (10/10) | 60.0% (6/10) |
 | **Cross-service accuracy** | **100%** (4/4) | **0%** (0/4) |
-| Same-service accuracy | 100% (12/12) | 100% (12/12) |
+| Same-service accuracy | 100% (6/6) | 100% (6/6) |
 | Blamed the symptom service on cross-service faults | 0 | **4 of 4** |
 
 The two arms are **identical on same-service faults** and **maximally divergent on cross-service
@@ -39,33 +39,44 @@ cross-service incidents it answered, it predicted `payment-service`. Not a scatt
 same wrong answer, four times out of four, and the same wrong answer retrieval suggested.
 
 This is not an inference from aggregate statistics. **On 4 of 4 cross-service failures, the model's
-own reasoning explicitly cites the retrieved incidents as its justification.** Verbatim, from
-`raw_run.json` (all three are `auth-key-error` incidents whose true root cause is `auth-service`):
+own reasoning explicitly cites the retrieved incidents as its justification** — three of them naming
+the retrieved IDs outright. Verbatim, from `raw_run.json`; the first two are `auth-key-error`
+incidents (true root cause `auth-service`), the third `notification-latency` (true root cause
+`notification-service`):
 
-> *"Historical past incidents (inc-0044, inc-0042, inc-0037) report the same root cause of a
-> memory-leak fault in the payment-service, which is consistent with the symptom of a JVM heap usage
-> increase."* — `inc-0005`
+> *"Historical records (inc-0042, inc-0044, inc-0037) also suggest a memory-leak fault type, with
+> the same root cause service (payment-service) and symptom service (payment-service)."* —
+> `inc-0011`
 
-> *"Past incidents (inc-0044, inc-0042, and inc-0037) also indicate a memory-leak fault type in the
-> payment-service, with similar symptoms."* — `inc-0002`
+> *"Historical past incidents (inc-0042, inc-0044, inc-0037) also report memory-leak as the fault
+> type and payment-service as the root and symptom services."* — `inc-0010`
 
-> *"Historical incident records (inc-0042, inc-0044, and inc-0037) show that the root cause of these
-> similar incidents was a memory-leak in the payment-service, which retained byte[] chunks without
-> releasing them."* — `inc-0015`
+> *"This is consistent with the pattern of memory-leak faults seen in past incidents (inc-0042,
+> inc-0037, inc-0044)."* — `inc-0067`
 
 The model is not reasoning poorly from the telemetry; it is reasoning *correctly from the retrieved
 precedent*, which happens to be wrong. Note also that it cites the same three Memory incidents every
 time — retrieval returned the same neighbours repeatedly, so a single retrieval weakness propagated
-into every cross-service diagnosis.
+into every cross-service diagnosis. That this holds across *both* cross-service fault types, whose
+telemetry signatures are entirely different, indicates the failure is driven by the retrieved
+precedent rather than by anything in the incident itself.
 
 **A compounding failure, and evidence that the reported hallucination rate understates the problem.**
-Two of those responses justify "memory leak" by citing specific heap values —
-`jvm_memory_used_bytes: 44984562.9` (45.0 MB) and `42760427.6` (42.8 MB). Payment-service's
-documented baseline range is **30–45 MB**. Both values are *within normal*. The model constructed an
-anomaly narrative around unremarkable readings in order to fit the retrieved precedent. That is a
-genuine hallucination, and the automated proxy did not catch it — because the proxy checks whether a
-cited metric *exists in the evidence*, and these metrics did exist; what was fabricated was their
-*significance*. See §6.4.
+Three of the four responses justify "memory leak" by citing a specific heap figure and calling it
+elevated: 30.7 MB (`inc-0011`, *"a significant increase in JVM memory used bytes"*), 30.5 MB
+(`inc-0067`, *"a high JVM heap usage increase"*) and 35.0 MB (`inc-0065`, *"a high JVM memory
+usage"*). Payment-service's documented `jvm_memory_used_bytes` baseline range is **30–45 MB**. All
+three values are *within normal*. The model constructed an anomaly narrative around unremarkable
+readings in order to fit the retrieved precedent.
+
+**Neither automated measure caught any of the three**, and the reason is worth recording because it
+bounds both metrics. The metric-name proxy misses them because the metrics are real. The stronger
+significance measure (§6.4) misses them because it can only parse a value that appears adjacent to
+its metric name in `metric_name: value` form, and here the model wrote the figure as a bare
+parenthetical — *"(30542939.0 bytes)"*. The one incident it did flag, `inc-0038`, wrote
+`jvm_memory_committed_bytes: 86431481.5` in the parseable form. So the reported 10.0% is a lower
+bound in a specific, demonstrable way: on this run, at least four unsupported significance claims
+exist and one is counted. See §6.4.
 
 **So the design decision that "retrieved incidents are evidence, not commands" is not a stylistic
 preference in this system — it is the entire measured difference between the two arms.** Had the
@@ -145,19 +156,21 @@ This is where the Claude→Ollama substitution shows its cost, and it should be 
 than minimised.
 
 **The multi-agent arm's LLM narration failed on 9 of 10 incidents** — `llama3.2:3b` exceeded the
-30-second timeout on nearly every RCA narrative request. Only three incidents received the
+30-second timeout on nearly every RCA narrative request. Only one incident received the
 LLM-authored reasoning chain the design intends.
 
 And the diagnostic accuracy was 100% regardless.
 
-Across two independent runs of the full evaluation, that narration count varied (1 of 21, then 3 of
-21) while **every one of the 96 diagnoses was identical** (§5.6). The component that failed
-inconsistently is precisely the component that changes nothing — which is what "the LLM narrates a
-conclusion it cannot alter" means operationally, demonstrated rather than asserted.
+Across two independent runs of the full evaluation, narration succeeded on one incident each time
+but **on a different incident each time** (`inc-0010`, then `inc-0065`), and on the single-agent arm
+all ten reasoning texts came back textually different — while **every one of the 96 diagnoses was
+identical** (§5.6). The component that behaves inconsistently is precisely the component that
+changes nothing, which is what "the LLM narrates a conclusion it cannot alter" means operationally,
+demonstrated rather than asserted.
 
 That is the "deterministic conclusion, LLM narration" split (§3.5) working exactly as designed,
 demonstrated by accident rather than by construction: the model that was supposed to explain the
-conclusion was unavailable for 95% of incidents, and not one conclusion changed. A system that had
+conclusion was unavailable for 90% of the incidents it answered, and not one conclusion changed. A system that had
 delegated diagnosis to that model would have produced nothing for those incidents.
 
 Two consequences follow honestly:
@@ -166,13 +179,15 @@ Two consequences follow honestly:
   single incident that produced reasoning text.
 - **The single-agent figure (0% over 10 incidents) is measurable but understates the problem, and
   the metric's definition is the reason.** The proxy was validated rather than assumed: across the
-  21 reasoning texts it detected 11 metric-name citations, all of which were genuinely present in
+  10 reasoning texts it detected 8 metric-name citations, all of which were genuinely present in
   the evidence — so 0% is a real measurement, not an artefact of a detector that finds nothing.
-  But §6.1 shows the model twice citing *real* heap values (45.0 MB, 42.8 MB) that sit inside
-  payment-service's documented 30–45 MB baseline and describing them as a "JVM heap usage increase"
-  indicating a memory leak. The metric was real; its stated significance was invented. **The proxy
-  detects fabricated metric _names_, not fabricated metric _interpretations_**, and the latter is
-  the more consequential failure because it is what produced the wrong diagnosis.
+  But on `inc-0038` the model cited a *real* value (`jvm_memory_committed_bytes` = 86.4 MB) that
+  sits inside payment-service's documented 70–90 MB committed baseline, and described it as a "JVM
+  heap usage increase" indicating a memory leak. The metric was real; its stated significance was
+  invented. **The proxy detects fabricated metric _names_, not fabricated metric
+  _interpretations_**, and the latter is the more consequential failure — not because it produced a
+  wrong answer here (it did not; that diagnosis was correct) but because it means a correct answer
+  and an unsupported one can be indistinguishable to the operator reading the justification.
 - **So a second measure was implemented and applied**
   (`metrics.unsupported_significance_claims`): it compares each cited value against its documented
   baseline range and flags claims of elevation the value does not support. Deliberately
@@ -181,11 +196,11 @@ Two consequences follow honestly:
 
   | Measure | Multi-agent | Single-agent |
   |---|---|---|
-  | Cited a metric absent from the evidence | 0% | 0% (over 21) |
-  | **Claimed a baseline-range value was elevated** | 0% *(1 sample)* | **10.0%** (2 of 21) |
+  | Cited a metric absent from the evidence | 0% | 0% (over 10) |
+  | **Claimed a baseline-range value was elevated** | 0% *(1 sample)* | **10.0%** (1 of 10) |
 
   The stronger measure finds a non-zero rate where the conventional one reports zero. Both figures
-  remain lower bounds: only 11 metric citations appear across 21 reasoning texts, so most responses
+  remain lower bounds: only 8 metric citations appear across 10 reasoning texts, so most responses
   offer no numeric claim to check at all. The lesson generalises beyond this project — a
   hallucination metric defined as "cited something that does not exist" will report near-zero for a
   model whose actual failure is misrepresenting things that do exist.

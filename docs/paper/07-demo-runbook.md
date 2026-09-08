@@ -33,12 +33,12 @@ Run the single-agent arm on that incident. It answers `payment-service`.
 
 > "This is a single LLM with the same telemetry and the same retrieved history the full pipeline
 > gets. It says payment-service. It said payment-service on all four cross-service incidents in the
-> evaluation — nine out of nine, the same wrong answer every time."
+> evaluation — four out of four, the same wrong answer every time."
 
 Then show *why*, from the model's own words (`docs/evaluation/raw_run.json`):
 
-> *"Historical past incidents (inc-0044, inc-0042, inc-0037) report the same root cause of a
-> memory-leak fault in the payment-service…"*
+> *"This is consistent with the pattern of memory-leak faults seen in past incidents (inc-0042,
+> inc-0037, inc-0044)."* — the baseline on `inc-0067`, a notification-latency incident
 
 > "It isn't reasoning badly. It's reasoning correctly from precedent that happens to be wrong.
 > Retrieval matched on payment-service's telemetry, so it returned payment-service incidents."
@@ -73,7 +73,7 @@ Then the ledger-service refusal, which is the strongest safety moment:
 
 Pre-empt the examiner rather than being caught by them:
 
-> "Two things I'd flag myself. Detection is the weak link — the Isolation Forest surfaced only 21 of
+> "Two things I'd flag myself. Detection is the weak link — the Isolation Forest surfaced only 10 of
 > 48 incidents, and I can show you exactly why: it saturates outside its training range, so a 2 GB
 > heap scores identically to 50 MB. And the 100% figure is on a synthetic corpus whose generator
 > shares constants with my thresholds, so I'd treat the comparison as the result and the absolute

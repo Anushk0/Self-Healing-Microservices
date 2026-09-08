@@ -75,10 +75,12 @@ def unsupported_significance_claims(result: ArmResult) -> list[str]:
     asserts they are elevated.
 
     This exists because `unsupported_metric_mentions()` proved too weak on the real run. It catches
-    a fabricated metric *name*; it cannot catch a fabricated metric *significance* - and the latter
-    is what actually produced wrong diagnoses here. In the reported run the baseline twice justified
-    "memory leak" by citing heap values of 45.0 MB and 42.8 MB, both inside payment-service's
-    documented 30-45 MB baseline.
+    a fabricated metric *name*; it cannot catch a fabricated metric *significance*, which is the
+    failure mode the baseline actually exhibits. In the reported run the baseline justified "memory
+    leak" on inc-0038 by citing jvm_memory_committed_bytes = 86.4 MB as evidence of a heap increase,
+    when 86.4 MB is inside payment-service's documented 70-90 MB committed baseline. Note that the
+    diagnosis it supported was nonetheless correct: this measures unsupported *reasoning*, not
+    wrong answers, and the two are independent.
 
     Deliberately conservative in three ways, so a flag means something: only metrics with a
     documented baseline range are checkable at all; only unambiguous elevation language counts; and
@@ -245,8 +247,8 @@ def ai_metrics(results: list[ArmResult]) -> dict:
         "unsupported_significance_note": (
             "Cited a real metric value that lies inside its documented baseline range while "
             "describing it as elevated. Catches fabricated *significance*, which the metric-name "
-            "check below cannot - and which is the failure mode that actually produced wrong "
-            "diagnoses in this run."
+            "check below cannot. It scores the justification, not the answer: a flagged incident "
+            "may still have been diagnosed correctly, and in this run it was."
         ),
         "wall_clock_seconds_per_incident_mean": _mean([r.total_wall_clock_seconds for r in results]),
         "llm_calls_per_incident_mean": _mean([float(r.llm_calls) for r in results]),

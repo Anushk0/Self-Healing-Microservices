@@ -12,15 +12,15 @@
 
 | # | Claim | Evidence | Verdict |
 |---|---|---|---|
-| A1 | 100% accuracy when answered (10/10) vs 60.0% (6/10) | `metrics.json` → `per_arm.*.performance.accuracy_when_answered` = 1.0 / 0.5714 | ✅ |
-| A2 | Cross-service 100% (4/4) vs 0% (0/4) | `cross_service_accuracy` = 1.0 / 0.0; `cross_service_count` = 9 | ✅ |
+| A1 | 100% accuracy when answered (10/10) vs 60.0% (6/10) | `metrics.json` → `per_arm.*.performance.accuracy_when_answered` = 1.0 / 0.6 | ✅ |
+| A2 | Cross-service 100% (4/4) vs 0% (0/4) | `cross_service_accuracy` = 1.0 / 0.0; `cross_service_count` = 4 | ✅ |
 | A3 | Indistinguishable on same-service faults | `same_service_accuracy` = 1.0 / 1.0 | ✅ |
-| A4 | Baseline named the symptom service on all 9 | `blamed_symptom_service_on_cross_service_incidents` = 9 | ✅ |
+| A4 | Baseline named the symptom service on all 4 | `blamed_symptom_service_on_cross_service_incidents` = 4 | ✅ |
 | A5 | Retrieval disagreed on all 4 cross-service incidents | `determination_method` partition: 5 `rag_agreement` + 1 `rag_only` (all same-service), 4 `rag_disagreement` (all cross-service) | ✅ |
 | A6 | Baseline's reasoning cites retrieved incidents in 4/4 failures | `raw_run.json`, verbatim quotes in Discussion §6.1 | ✅ |
-| A7 | Both arms abstained on 79.2%; detector surfaced 10 of 48 | `abstention_rate` = 0.5625 both arms | ✅ |
-| A8 | Multi-agent cost ≈4.0× wall clock | 8.5266 / 2.1226 = **3.626** | ✅ |
-| A9 | Narration failed on 9 of 10 | `incidents_with_reasoning_text` = 3, answered = 21 | ✅ |
+| A7 | Both arms abstained on 79.2%; detector surfaced 10 of 48 | `abstention_rate` = 0.7917 both arms | ✅ |
+| A8 | Multi-agent cost ≈4.0× wall clock | 8.5266 / 2.1226 = **4.017** | ✅ |
+| A9 | Narration failed on 9 of 10 | `incidents_with_reasoning_text` = 1, answered = 10 | ✅ |
 | A10 | Conventional hallucination metric 0%, stronger measure 10.0% | `hallucination_rate` = 0.0; `unsupported_significance_rate` = 0.1 | ✅ |
 | A11 | 68-incident corpus, 20/48 split, zero overlap | `split_manifest.json`; overlap verified empty | ✅ |
 | A12 | Leakage guard verified live at measurement time | `preflight.rule_22_guard_verified_live` = True, probe `inc-0014` refused | ✅ |

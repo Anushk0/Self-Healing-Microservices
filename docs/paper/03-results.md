@@ -25,9 +25,9 @@ Environment: Windows 11, Python 3.12.2, Ollama `llama3.2:3b`, all four detectors
 | Accuracy over all 48 incidents | **20.8%** | 12.5% |
 | Accuracy when the system answered | **100%** (10/10) | 60.0% (6/10) |
 | Abstention rate | 79.2% | 79.2% |
-| Precision / Recall / F1 (macro) | 100% / 100% / 100% | 35.9% / 50.0% / 40.2% |
+| Precision / Recall / F1 (macro) | 100% / 100% / 100% | 37.5% / 50.0% / 41.7% |
 | **Cross-service accuracy** | **100%** (4/4) | **0%** (0/4) |
-| Same-service accuracy | 100% (12/12) | 100% (12/12) |
+| Same-service accuracy | 100% (6/6) | 100% (6/6) |
 | Blamed the symptom service on cross-service faults | 0 | **4 of 4** |
 | Errored incidents | 0 | 0 |
 
@@ -65,8 +65,8 @@ behind the entire result.
 
 | Metric | Multi-agent | Single-agent |
 |---|---|---|
-| Detection latency (detection path only), mean | 0.0115 s | 0.0115 s |
-| Detection latency, median | 0.0106 s | 0.0106 s |
+| Detection latency (detection path only), mean | 0.0061 s | 0.0061 s |
+| Detection latency, median | 0.0052 s | 0.0052 s |
 | Time to approval pause (incl. diagnosis), mean | 8.5 s | 2.12 s |
 | Anomaly detection rate | 20.8% | 20.8% |
 | MTTR | **not measurable in replay** | **not measurable in replay** |
@@ -84,8 +84,8 @@ orders of magnitude and making the two arms appear to differ on a stage they sha
 error was found by inspecting the anomalous mean against a near-zero median.
 
 Detection rate by fault type: `memory-leak` 4/12, `auth-key-error` 2/12, `db-lock` 2/12,
-`notification-latency` 2/12. Fewer than half of all incidents were surfaced for diagnosis at all, which is
-the binding constraint on the system as deployed (§6.3).
+`notification-latency` 2/12. 10 of 48 incidents - roughly one in five - were surfaced for diagnosis at
+all, which is the binding constraint on the system as deployed (§6.3).
 
 The three unmeasured metrics require an active fault to remediate and therefore a live cluster;
 they are reported as unmeasurable rather than as the 100% a dry-run would trivially produce.
@@ -95,11 +95,11 @@ they are reported as unmeasurable rather than as the 100% a dry-run would trivia
 | Metric | Multi-agent | Single-agent |
 |---|---|---|
 | LLM calls per incident (mean) | 0.4167 | 0.2083 |
-| LLM calls, total | 42 | 21 |
+| LLM calls, total | 20 | 10 |
 | Wall clock per incident (mean) | 8.5 s | 2.12 s |
-| Incidents producing reasoning text | **1 of 10** | 21 of 21 |
-| Hallucination — cited a metric absent from the evidence | 0% *(3 samples — not meaningful)* | 0% (over 21) |
-| **Hallucination — claimed a baseline-range value was elevated** | 0% | **10.0%** (2 of 21) |
+| Incidents producing reasoning text | **1 of 10** | 10 of 10 |
+| Hallucination — cited a metric absent from the evidence | 0% *(1 sample — not meaningful)* | 0% (over 10) |
+| **Hallucination — claimed a baseline-range value was elevated** | 0% | **10.0%** (1 of 10) |
 | Response parse-issue rate | 0% | 0% |
 
 Token cost is replaced by inference time and call count, per the self-hosted-model substitution
@@ -111,12 +111,20 @@ that the deterministic conclusion does not depend on the model (§6.4).
 
 The two hallucination rows measure different things, and the difference is the finding. The
 conventional definition — citing a metric that does not exist in the evidence — returns 0% for the
-baseline, and that 0% is a real measurement rather than a broken detector (11 genuine metric
-citations were detected across the 21 reasoning texts). But the baseline twice justified "memory
-leak" using heap values of 45.0 MB and 42.8 MB, both inside payment-service's documented 30–45 MB
-baseline. The metrics were real; their stated significance was invented. A second measure comparing
-each cited value against its documented baseline range reports **10.0%** where the first reports 0%.
-Both remain lower bounds, since most responses cite no numeric value at all. See §6.4.
+baseline, and that 0% is a real measurement rather than a broken detector (8 genuine metric
+citations were detected across the 10 reasoning texts). But on `inc-0038` the baseline justified
+"memory leak" by citing `jvm_memory_committed_bytes = 86.4 MB` as evidence of a heap increase, when
+86.4 MB sits inside payment-service's documented 70–90 MB committed baseline. The metric was real;
+its stated significance was invented. A second measure comparing each cited value against its
+documented baseline range reports **10.0%** where the first reports 0%.
+
+Worth stating plainly, because it cuts against a convenient reading: **that diagnosis was
+correct.** `inc-0038` genuinely was a payment-service memory leak, and the baseline named it. The
+unsupported claim was in the justification, not the conclusion. This is the more troubling case for
+an operator, not the less — a right answer supported by a reason that does not hold is
+indistinguishable, at review time, from a right answer that is actually grounded.
+
+Both figures remain lower bounds, since most responses cite no numeric value at all. See §6.4.
 
 ## 5.6 Run-to-run reproducibility
 
@@ -131,12 +139,25 @@ incident by incident:
 Every headline metric is therefore identical between runs. The multi-agent result is reproducible by
 construction — its conclusion is reached deterministically. **The single-agent result being equally
 reproducible was not guaranteed** and is worth stating: an LLM-driven diagnosis produced the same
-48 answers twice, including the same nine wrong ones.
+48 answers twice, including the same four wrong ones.
 
-What did vary is the part that does not affect the conclusion: the multi-agent arm's LLM narration
-succeeded on 1 of 10 incidents in each of the two runs, the rest timing out. That
-narration variance changed no diagnosis — which is direct evidence for the architectural claim that
-the narrative layer cannot influence the deterministic conclusion (§3.5).
+What did vary is the part that does not affect the conclusion, and it varied more than a count
+would show. The multi-agent arm's LLM narration succeeded on exactly one incident in each run — but
+**not the same incident**: `inc-0010` in the first run, `inc-0065` in the second, with everything
+else timing out. And on the single-agent arm, **all ten reasoning texts differed textually between
+the runs** while all ten of its extracted conclusions were identical.
+
+So the prose was different on every incident that produced any, in both arms, and not one of the 96
+diagnoses moved. That is stronger evidence for the architectural claim than a stable count would
+have been: the narrative layer demonstrably varies run to run, and the deterministic conclusion
+demonstrably does not depend on it (§3.5). For the baseline it also isolates where the LLM's
+non-determinism does and does not reach — it rewrote its justification every time and still
+extracted the same service name, including the same four wrong ones.
+
+**Reproduce it:** run `python -m ai_orchestration.evaluation.run_evaluation --out <dir>` twice and
+diff `per_incident_results.csv` on `predicted_root_cause_service`. The second run's rows and metrics
+are committed at `docs/evaluation/reproducibility/` so the comparison can be checked without
+re-running anything.
 
 This should be read narrowly. It establishes that this model, at this temperature, on these prompts,
 is stable across two runs; it does not establish that single-agent diagnosis is stable in general,
@@ -146,8 +167,8 @@ and two runs cannot characterise a distribution.
 
 | Metric | Multi-agent | Single-agent |
 |---|---|---|
-| Incidents reaching human approval | 21 | 21 |
-| Approved / Rejected | 21 / 0 | 21 / 0 |
+| Incidents reaching human approval | 10 | 10 |
+| Approved / Rejected | 10 / 0 | 10 / 0 |
 | Approval accuracy | 100% | 60.0% |
 | Unsafe actions prevented by Safety Validator | 0 | 0 |
 | **Executions without approval** | **0** | **0** |

@@ -164,8 +164,8 @@ defer to retrieval, not from anything retrieval supplied. Any suggestion that RA
 here is unsupported and has been removed from the write-up.
 
 For the single-agent baseline the same intervention was dramatic in both directions: same-service
-accuracy collapsed 100% -> 0%, cross-service accuracy *improved* 0% -> 33.3%, and symptom-service
-blaming fell from 4 of 4 to 2. Retrieval was substituting for reasoning - right on same-service
+accuracy collapsed 100% -> 16.7% (1 of 6), cross-service accuracy *improved* 0% -> 50.0% (2 of 4),
+and symptom-service blaming fell from 4 of 4 to 0 of 4. Retrieval was substituting for reasoning - right on same-service
 faults, systematically wrong on cross-service ones. That the same intervention leaves one arm
 unchanged and reorganises the other is itself evidence for the architectural claim.
 

@@ -72,7 +72,12 @@ of this architecture too, `docs/paper/05-related-work.md` §5.2 carries an empir
 proving this system's scored output varies with input telemetry, with a permanent regression test.
 
 Artefacts: `docs/evaluation/` (results, metrics, per-incident CSV, charts) and `docs/paper/`
-(dataset construction, methodology, results, discussion, related work, figures). 283 tests pass.
+(dataset construction, methodology, results, discussion, related work, figures).
+
+**Every test in the project has been executed on this machine: 316 Python (245 ai-orchestration
++ 52 dataset-tools + 19 telemetry) and 47 Java, 0 failures.** That includes
+`test_paper_claims_match_artefacts.py`, which re-derives every headline figure in `docs/paper/`
+from `docs/evaluation/` and fails if the prose and the artefacts disagree.
 
 Weeks 10-11 complete: the pipeline now closes the loop and has a comparison arm.
 **Week 10** executes an approved action against the running system (fault reset over HTTP, or a pod
