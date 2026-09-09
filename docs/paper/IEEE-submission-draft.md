@@ -1,9 +1,50 @@
 # Evidence, Not Commands: A Deterministic-First Multi-Agent Framework for Cross-Service Root Cause Analysis and Human-Governed Remediation in Financial Microservices
 
-**Anushk Agrawal, Bhoomi Airen, Abhijay Krishnan**
-Department of Computer Engineering, Mukesh Patel School of Technology Management & Engineering, NMIMS, Mumbai, India
+<!-- ============================================================================
+     AUTHOR BLOCK
 
-**Guide:** Prof. Shakila Shaikh, Department of Computer Engineering, MPSTME, NMIMS, Mumbai, India
+     IEEE conference template: paste each author into its own cell of the
+     author grid (3 across, wrapping to a second row for the 4th author).
+     IEEE journal template: run the names inline, affiliations as footnotes.
+
+     [AUTHOR] Fill in the six email addresses. Use institutional addresses -
+     IEEE prefers them, and a personal address on a submission looks unaffiliated.
+     [AUTHOR] Add ORCID iDs if you have them; they are optional but free to add
+     and increasingly expected.
+     [AUTHOR] Confirm the corresponding author. Convention is the supervisor or
+     the first author; only one is marked.
+     [AUTHOR] Confirm whether your department requires the "Guide:" line for
+     internal submission. IEEE has no such field - a contributing supervisor is
+     a co-author. Delete the line if you are submitting externally.
+     ============================================================================ -->
+
+**Anushk Agrawal**
+Department of Computer Engineering
+Mukesh Patel School of Technology Management & Engineering
+SVKM's Narsee Monjee Institute of Management Studies (NMIMS)
+Mumbai, Maharashtra, India
+*[AUTHOR: email]*
+
+**Bhoomi Airen**
+Department of Computer Engineering
+Mukesh Patel School of Technology Management & Engineering
+SVKM's Narsee Monjee Institute of Management Studies (NMIMS)
+Mumbai, Maharashtra, India
+*[AUTHOR: email]*
+
+**Abhijay Krishnan**
+Department of Computer Engineering
+Mukesh Patel School of Technology Management & Engineering
+SVKM's Narsee Monjee Institute of Management Studies (NMIMS)
+Mumbai, Maharashtra, India
+*[AUTHOR: email]*
+
+**Shakila Shaikh**
+Department of Computer Engineering
+Mukesh Patel School of Technology Management & Engineering
+SVKM's Narsee Monjee Institute of Management Studies (NMIMS)
+Mumbai, Maharashtra, India
+*[AUTHOR: email]* (corresponding author)
 
 ---
 
