@@ -12,6 +12,23 @@ Department of Computer Engineering, Mukesh Patel School of Technology Management
 > by hand: `ai-orchestration/tests/test_paper_claims_match_artefacts.py` re-derives them from
 > `metrics.json` and fails if the prose and the artefacts disagree. Placeholders requiring your
 > action are marked **[AUTHOR]**.
+>
+> **Figure inventory.** Eight figures are slotted, each with an HTML comment giving placement,
+> column width and a pre-submission checklist. Captions are written; the artwork is not.
+>
+> | Fig. | Subject | Status | Section |
+> |---|---|---|---|
+> | 1 | System architecture | **You have it** — check item (e), the operator as an external actor | III-A |
+> | 2 | Pipeline control flow | **You have it** — check item (d), the advisory retrieval edge | III-A |
+> | 3 | Cross-service fault propagation | Render from `diagrams.md` | III-B |
+> | 4 | Dataset construction and leakage barrier | Render from `diagrams.md` | IV-C |
+> | 5 | Accuracy comparison | PNG exists; **add error bars** | V-A |
+> | 6 | Negative control by phase | Generate from `negative_control.json` | V-D |
+> | 7 | Ablation summary | Generate from the two ablation metric files | VI-A |
+> | 8 | Cost per incident | PNG exists | VII-D |
+>
+> Eight figures suits 14–15 pages. If you must cut, cut 8 then 5; keep 1, 2, 3 and 7. Figure 7
+> carries Finding B1 and Figure 3 defines the problem the paper exists to solve.
 
 ---
 
@@ -270,7 +287,42 @@ entities rather than as misrepresentation of real ones.
 
 ## III. Proposed Framework
 
-### A. Design principles
+### A. Overview and design principles
+
+Fig. 1 shows the system architecture: the four monitored services, the telemetry path, the
+components of the orchestration layer and the two stores it depends on. Fig. 2 shows the same system
+as a control flow, tracing a single incident from a telemetry record to a terminal state and marking
+the three points at which the pipeline can refuse to proceed.
+
+The two views are separated deliberately. The architecture answers *what exists and what talks to
+what*; the flow answers *what may happen and in what order*, which is where this design differs from
+the reviewed alternatives. Readers comparing this work against retrieval-first pipelines should look
+at the flow, not the architecture, because the components are largely conventional and the ordering
+constraints are not.
+
+<!-- ============================================================================
+     FIGURE 1 - SYSTEM ARCHITECTURE   [AUTHOR: insert your architecture diagram]
+
+     Full column width (single column) or double column if legibility requires.
+     Place at the top of the page containing Section III-A.
+
+     Check before submission - the caption below asserts each of these:
+       (a) all four services shown, with the payment service's synchronous calls
+           to the other three drawn as directed edges;
+       (b) the telemetry collector and the synthetic payment probe both shown;
+       (c) the orchestration layer's stages distinguishable;
+       (d) both stores shown (per-service detector models, retrieval memory);
+       (e) the human operator drawn as an external actor, not an internal box.
+     If (e) is not in your current diagram, add it. It is the paper's contribution
+     and a reader should be able to see it without reading the caption.
+     ============================================================================ -->
+
+**Fig. 1.** System architecture. Four Spring Boot microservices are polled by a telemetry collector
+that also drives a synthetic login-and-payment probe, since two of the four faults manifest only on
+a live request path. The orchestration layer consumes the resulting records and draws on two local
+stores: per-service anomaly detectors, and a retrieval memory built exclusively from the Memory
+partition. The human operator is external to the system boundary; no path from diagnosis to
+execution bypasses that actor.
 
 Four principles govern the design, each of which is falsifiable and is tested later in this paper.
 
@@ -282,6 +334,34 @@ Four principles govern the design, each of which is falsifiable and is tested la
    call; the graph cannot advance past approval without an external signal.
 4. **Refusal over fabrication.** An unmeasurable quantity is reported as unmeasurable, and an
    abstention is scored separately from a wrong answer.
+
+<!-- ============================================================================
+     FIGURE 2 - PIPELINE CONTROL FLOW   [AUTHOR: insert your flow diagram]
+
+     Full column width. Place near Section III-A or at the top of the page
+     carrying Sections III-F to III-I.
+
+     Check before submission - the caption below asserts each of these:
+       (a) the three refusal points are visually distinct from the ordinary
+           stages: abstention when nothing matches, safety rejection, and
+           human rejection;
+       (b) the safety validator sits BEFORE the human approval gate, since the
+           ordering is the claim (a rule violation never reaches an operator);
+       (c) the retry edge returns to remediation proposal, NOT to root cause
+           analysis, and passes through safety and approval again;
+       (d) the retrieval edge into root cause analysis is drawn as advisory
+           (dashed, or annotated "evidence only") and is visibly incapable of
+           replacing the deterministic conclusion. This single edge is the
+           paper's central claim - if a reader misreads it as an input that
+           determines the answer, Sections VI-B and VI-C will not land.
+     ============================================================================ -->
+
+**Fig. 2.** Pipeline control flow for a single incident. Solid edges carry the conclusion; the
+dashed edge from retrieval is advisory and cannot alter it. Three states terminate a run without
+execution: abstention when no signature matches and no retrieval fallback applies, deterministic
+safety rejection, and human rejection. The retry path returns to remediation proposal rather than to
+diagnosis, and re-enters both the safety validator and the approval gate, so an approval granted for
+one action is never inherited by another.
 
 ### B. Monitored system and fault taxonomy
 
@@ -303,6 +383,16 @@ and two are cross-service.
 
 The two cross-service faults are the experimental object of the paper. A system that reasons only
 from the symptomatic service will attribute both to payment-service.
+
+<!-- FIGURE 3 - CROSS-SERVICE FAULT PROPAGATION   [AUTHOR: render from docs/paper/diagrams.md,
+     "Why cross-service faults are the hard case". Single column. Place early - this figure
+     defines the problem, and a reader who grasps it here needs no further motivation. -->
+
+**Fig. 3.** Same-service versus cross-service faults. For `memory-leak` and `db-lock` the service
+reporting the anomaly is the faulty one, and naming the reporting service is correct. For
+`auth-key-error` and `notification-latency` the anomaly surfaces on the payment service while the
+fault lies upstream, so naming the reporting service is wrong every time. The two classes are
+indistinguishable from the reporting service's own telemetry without a rule that separates them.
 
 ### C. Telemetry capture
 
@@ -425,6 +515,17 @@ measurement is recorded: it attempts a write-back of a genuine Evaluation incide
 entire run unless the refusal occurs. The probe identifier and refusal reason are recorded in the
 results artefact.
 
+<!-- FIGURE 4 - DATASET CONSTRUCTION AND THE LEAKAGE BARRIER   [AUTHOR: render from
+     docs/paper/diagrams.md, "Dataset construction and the leakage barrier". Single column.
+     Show all three enforcement layers as separate barriers, and mark the live pre-flight
+     check distinctly - it is the one that runs at measurement time rather than at build time. -->
+
+**Fig. 4.** Dataset construction and the three independent points at which Evaluation-set leakage is
+refused. The retrieval-memory builder never opens the Evaluation file; the feedback writer refuses
+Evaluation incidents and fails closed when the file cannot be read; and the harness verifies the
+guard live before any measurement, aborting the run if a genuine Evaluation incident is not
+refused.
+
 ### D. Single-agent baseline
 
 The baseline is a genuinely separate implementation: one prompt, one model call producing root cause
@@ -537,6 +638,15 @@ all passing.
 | Blamed the symptom service on cross-service faults | 0 | **4 of 4** |
 | Errored incidents | 0 | 0 |
 
+<!-- FIGURE 5 - ACCURACY COMPARISON   [AUTHOR: docs/evaluation/fig_accuracy_comparison.png
+     already exists. Before using it, add 95% confidence intervals as error bars - the intervals
+     are wide and a bar chart without them overstates the result. Double column if it carries
+     the cross-service and same-service breakdowns alongside the aggregate. -->
+
+**Fig. 5.** Root-cause accuracy by arm, with 95% Wilson intervals. The arms coincide on
+same-service faults and separate completely on cross-service faults. The intervals are wide because
+the answered subset is small, and are shown rather than omitted.
+
 With 95% Wilson intervals, multi-agent accuracy when answered is 1.000 [0.722, 1.000] and
 cross-service accuracy is 1.000 [0.510, 1.000]; the baseline's cross-service accuracy is 0.000
 [0.000, 0.490]. The intervals are wide, and deliberately reported as such.
@@ -616,6 +726,14 @@ records: its normal-phase averages and its recovery-phase averages, for the same
 | Normal phase | 2 / 48 | 4.17% | [1.15%, 13.98%] |
 | **Recovery phase** | **13 / 48** | **27.08%** | [16.57%, 41.00%] |
 | Combined | 15 / 96 | 15.62% | [9.70%, 24.19%] |
+
+<!-- FIGURE 6 - NEGATIVE CONTROL   [AUTHOR: generate from
+     docs/evaluation/negative_control/negative_control.json. Two bars, normal versus recovery,
+     with 95% Wilson intervals as error bars. Single column. Keep the two phases as separate
+     bars - pooling them hides the entire finding. -->
+
+**Fig. 6.** False-positive rate on telemetry from services that are not faulty, by phase, with 95%
+Wilson intervals. The post-recovery rate is more than six times the normal-phase rate.
 
 The normal-phase rate is acceptable. The recovery-phase rate is more than six times higher and is an
 operationally significant defect: after a fault has been cleared, metrics have not yet returned to
@@ -705,6 +823,15 @@ and by a live session, and is **not** claimed as a demonstrated result of this e
 ## VI. Ablation Studies
 
 ### A. Design
+
+<!-- FIGURE 7 - ABLATION SUMMARY   [AUTHOR: generate from the two ablation metrics.json files.
+     Grouped bars: shipped / no-retrieval / override, for both arms, on cross-service accuracy.
+     Double column. This is the paper's strongest figure - the override bars should visibly
+     coincide with the baseline bars, since that coincidence IS Finding B1. -->
+
+**Fig. 7.** Cross-service accuracy under both ablations. Removing retrieval leaves the multi-agent
+arm unchanged and reorganises the baseline. Permitting retrieval to override the deterministic
+conclusion drops the multi-agent arm onto the baseline exactly.
 
 Two ablations, both disabled by default in the shipped configuration, both recorded in every run's
 environment block, and both covered by tests asserting they are off by default.
@@ -849,6 +976,13 @@ flagged incident may still be diagnosed correctly, and in this run it was.
 The multi-agent arm used twice the model calls and 4.017 times the wall clock of the baseline. The
 benefit is confined entirely to cross-service diagnosis; on same-service faults the two are
 indistinguishable and the decomposition is pure overhead.
+
+<!-- FIGURE 8 - COST PER INCIDENT   [AUTHOR: docs/evaluation/fig_cost_per_incident.png exists.
+     Single column. Consider following OperAID [4] and plotting accuracy against cost as a
+     frontier rather than as two separate bars - it makes the trade-off legible in one glance. -->
+
+**Fig. 8.** Model calls and wall-clock time per incident, by arm. The decomposed design costs twice
+the model calls and 4.017 times the wall clock, and buys accuracy only on cross-service faults.
 
 This mirrors a trade-off reported elsewhere in the literature. LATS-RCA [3] reports roughly 75 API
 calls and 13 minutes per incident; OperAID [4] finds a 2.9-fold cost increase buying a 5.5 point

@@ -386,3 +386,27 @@ def test_draft_reports_the_conservative_paired_test(draft):
     assert f"p = {p_sign:.3f}" in draft
     assert "do not claim significance over all answered incidents" in draft
     assert "conservative statistic" in draft
+
+
+def test_draft_figures_are_numbered_in_order_and_all_referenced(draft):
+    """Figure slots are easy to reorder while editing and easy to break silently. IEEE requires
+    figures to appear in the order they are first cited, so both the captions and the in-text
+    citations are checked."""
+    import re
+
+    captions = [int(n) for n in re.findall(r"^\*\*Fig\. (\d+)\.\*\*", draft, re.MULTILINE)]
+    assert captions == sorted(captions), f"figure captions are out of order: {captions}"
+    assert captions == list(range(1, len(captions) + 1)), f"figure numbering has gaps: {captions}"
+    assert len(captions) >= 8, "the draft is sized for eight figures"
+
+    # Every figure must have a placement comment carrying instructions for the author.
+    assert draft.count("FIGURE ") >= len(captions)
+
+    # Every in-text "Fig. N" reference must point at a figure that exists.
+    referenced = {int(n) for n in re.findall(r"Fig\. (\d+)(?!\.\*\*)", draft)}
+    missing = referenced - set(captions)
+    assert not missing, f"draft references figures that have no caption: {sorted(missing)}"
+
+    # The two figures the authors supply themselves are the ones the argument leans on.
+    assert "Fig. 1 shows the system architecture" in draft
+    assert "Fig. 2 shows the same system" in draft
