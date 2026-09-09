@@ -314,3 +314,75 @@ def test_baseline_prose_varied_while_its_conclusions_did_not():
         if run1[k]["predicted_root_cause_service"] != run2[k]["predicted_root_cause_service"]
     ]
     assert not moved, f"conclusions must be stable while prose varies; moved on {moved}"
+
+
+# --- The IEEE submission draft ------------------------------------------------------------------
+#
+# The draft in IEEE-submission-draft.md is the document that will actually be submitted, so its
+# figures get the same treatment as the working sections: derived from artefacts, never typed.
+
+import math  # noqa: E402
+
+
+def _wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
+    p = k / n
+    d = 1 + z * z / n
+    c = (p + z * z / (2 * n)) / d
+    h = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
+    return max(0.0, c - h), min(1.0, c + h)
+
+
+@pytest.fixture(scope="module")
+def draft() -> str:
+    return (PAPER / "IEEE-submission-draft.md").read_text(encoding="utf-8")
+
+
+def test_draft_negative_control_table_matches_the_artefact(draft):
+    """Section V-D. These are the newest numbers in the paper and the easiest to mistype."""
+    report = _json(EVAL / "negative_control" / "negative_control.json")
+
+    for phase, label in (("normal", "Normal phase"), ("recovery", "Recovery phase")):
+        b = report["per_phase"][phase]
+        k, n = b["false_positives"], b["records_scored"]
+        lo, hi = _wilson(k, n)
+        assert f"{k} / {n}" in draft, f"{phase}: count {k} / {n} missing from the draft"
+        assert f"{k / n * 100:.2f}%" in draft, f"{phase}: rate missing from the draft"
+        assert f"[{lo * 100:.2f}%, {hi * 100:.2f}%]" in draft, f"{phase}: CI missing from the draft"
+
+    c = report["combined"]
+    assert f"{c['false_positives']} / {c['records_scored']}" in draft
+    assert f"{c['false_positives'] / c['records_scored'] * 100:.2f}%" in draft
+
+
+def test_draft_recovery_false_positive_rate_really_is_the_worse_one(draft):
+    """The draft argues the recovery-phase rate is several times the normal-phase rate. If a future
+    detector change reverses that, the argument in Section V-D and VII-F becomes wrong, not just
+    stale - so the relationship is asserted, not only the numbers."""
+    report = _json(EVAL / "negative_control" / "negative_control.json")
+    normal = report["per_phase"]["normal"]["false_positive_rate"]
+    recovery = report["per_phase"]["recovery"]["false_positive_rate"]
+    assert recovery > normal * 3, (
+        f"draft claims recovery-phase false positives are far worse ({recovery} vs {normal}); "
+        "if this no longer holds, Sections V-D and VII-F need rewriting"
+    )
+
+
+def test_draft_headline_and_cross_service_figures_match_metrics(metrics, draft):
+    multi = metrics["per_arm"]["multi_agent"]["performance"]
+    single = metrics["per_arm"]["single_agent"]["performance"]
+    n, nc = multi["answered"], multi["cross_service_count"]
+    correct_s = round(single["accuracy_when_answered"] * n)
+
+    assert f"correct on {n} of {n} against {correct_s} of {n}" in draft
+    assert f"correct on {nc} of {nc} against 0 of {nc}" in draft
+    assert f"({nc}/{nc})" in draft and f"(0/{nc})" in draft
+
+
+def test_draft_reports_the_conservative_paired_test(draft):
+    """The draft must not claim significance it does not have. Four discordant pairs give p = 0.125
+    under an exact sign test; the draft states this and declines the stronger claim."""
+    discordant = 4
+    p_sign = 2 * 0.5 ** discordant
+    assert f"p = {p_sign:.3f}" in draft
+    assert "do not claim significance over all answered incidents" in draft
+    assert "conservative statistic" in draft

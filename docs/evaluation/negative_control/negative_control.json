@@ -1,0 +1,130 @@
+{
+  "description": "False-positive rate of the shared anomaly detector on telemetry from services that are not faulty. Any anomaly flag on these records is a false positive.",
+  "detectors": [
+    "auth-service",
+    "ledger-service",
+    "notification-service",
+    "payment-service"
+  ],
+  "evaluation_incident_count": 48,
+  "per_phase": {
+    "normal": {
+      "records_scored": 48,
+      "records_skipped": 0,
+      "false_positives": 2,
+      "false_positive_rate": 0.0417,
+      "ci95_lower": 0.0115,
+      "ci95_upper": 0.1398,
+      "flagged": [
+        {
+          "incident_id": "inc-0011",
+          "service": "payment-service",
+          "anomaly_score": 0.012413,
+          "true_fault_type": "auth-key-error"
+        },
+        {
+          "incident_id": "inc-0024",
+          "service": "ledger-service",
+          "anomaly_score": 0.013552,
+          "true_fault_type": "db-lock"
+        }
+      ]
+    },
+    "recovery": {
+      "records_scored": 48,
+      "records_skipped": 0,
+      "false_positives": 13,
+      "false_positive_rate": 0.2708,
+      "ci95_lower": 0.1657,
+      "ci95_upper": 0.41,
+      "flagged": [
+        {
+          "incident_id": "inc-0011",
+          "service": "payment-service",
+          "anomaly_score": 0.037357,
+          "true_fault_type": "auth-key-error"
+        },
+        {
+          "incident_id": "inc-0010",
+          "service": "payment-service",
+          "anomaly_score": 0.047536,
+          "true_fault_type": "auth-key-error"
+        },
+        {
+          "incident_id": "inc-0034",
+          "service": "ledger-service",
+          "anomaly_score": 0.014952,
+          "true_fault_type": "db-lock"
+        },
+        {
+          "incident_id": "inc-0026",
+          "service": "ledger-service",
+          "anomaly_score": 0.032706,
+          "true_fault_type": "db-lock"
+        },
+        {
+          "incident_id": "inc-0023",
+          "service": "ledger-service",
+          "anomaly_score": 0.013448,
+          "true_fault_type": "db-lock"
+        },
+        {
+          "incident_id": "inc-0024",
+          "service": "ledger-service",
+          "anomaly_score": 0.044029,
+          "true_fault_type": "db-lock"
+        },
+        {
+          "incident_id": "inc-0039",
+          "service": "payment-service",
+          "anomaly_score": 0.016292,
+          "true_fault_type": "memory-leak"
+        },
+        {
+          "incident_id": "inc-0036",
+          "service": "payment-service",
+          "anomaly_score": 0.011584,
+          "true_fault_type": "memory-leak"
+        },
+        {
+          "incident_id": "inc-0051",
+          "service": "payment-service",
+          "anomaly_score": 0.03393,
+          "true_fault_type": "memory-leak"
+        },
+        {
+          "incident_id": "inc-0048",
+          "service": "payment-service",
+          "anomaly_score": 0.047578,
+          "true_fault_type": "memory-leak"
+        },
+        {
+          "incident_id": "inc-0035",
+          "service": "payment-service",
+          "anomaly_score": 0.007132,
+          "true_fault_type": "memory-leak"
+        },
+        {
+          "incident_id": "inc-0038",
+          "service": "payment-service",
+          "anomaly_score": 0.043923,
+          "true_fault_type": "memory-leak"
+        },
+        {
+          "incident_id": "inc-0065",
+          "service": "payment-service",
+          "anomaly_score": 0.011113,
+          "true_fault_type": "notification-latency"
+        }
+      ]
+    }
+  },
+  "combined": {
+    "records_scored": 96,
+    "false_positives": 15,
+    "false_positive_rate": 0.1562,
+    "ci95_lower": 0.097,
+    "ci95_upper": 0.2419
+  },
+  "interpretation_note": "Detectors are trained on NORMAL/RECOVERY phases of Memory-set incidents from the same generator, so a low NORMAL-phase rate is partly expected by construction. The RECOVERY-phase rate is the informative figure: it is high despite that advantage, meaning the system keeps alarming on a service that has just been repaired."
+}
