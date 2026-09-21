@@ -1,32 +1,31 @@
-# Rebuilding the Word manuscript
+# The manuscript
 
-`IEEE-submission-draft.docx` is **generated** from `IEEE-submission-draft.md`. Edit the markdown,
-not the Word file, or the two will diverge - which is the exact failure this project has already
-been bitten by once, when the paper's prose drifted from the evaluation artefacts.
+**`docs/paper/FINAL_IEEE_PAPER.docx` is the canonical manuscript.** It is the version to submit.
+`FINAL_IEEE_PAPER_TRACKED_CHANGES.docx` is the same document with every edit made during review
+shown in red, for the authors' and supervisor's reference; strip nothing from it, just don't submit
+it.
+
+`IEEE-submission-draft.md` and `IEEE-submission-draft.docx` are the earlier markdown-generated
+draft. They are superseded: the final paper was edited in Word after that point (IEEE layout,
+restructured abstract, rebuilt tables, new figures), so the markdown no longer matches it. Keep the
+markdown for history; do not regenerate the Word file from it.
+
+## Figures
+
+Every figure is generated, not drawn by hand:
 
 ```bash
-node docs/paper/build/build_docx.js \
-     docs/paper/IEEE-submission-draft.md \
-     docs/paper/IEEE-submission-draft.docx
+python docs/paper/figures/make_figures.py
 ```
 
-Requires Node with the `docx` package available.
+Figs. 1-3 are diagrams. Fig. 2 mirrors `ai-orchestration/src/ai_orchestration/graph/workflow.py`
+node for node, so if the graph changes, update the script. Figs. 4-7 read their values directly from
+`docs/evaluation/` (metrics, ablation metrics and the negative control), so no plotted number is
+typed. Each figure is written as a 600 dpi PNG, which is what the Word file embeds, and as a vector
+PDF, which is what to upload if the venue accepts separate figure files.
 
-## What the generator does
+## Layout
 
-- US Letter, 1 inch margins, Times New Roman 10 pt, justified body text.
-- `##` headings become centred uppercase section headings; `###` become italic subsections, which
-  is the IEEE convention.
-- Markdown tables become real Word tables with shaded header rows and explicit column widths, so
-  they survive a round trip through Google Docs.
-- **The HTML figure comments are rendered as visible amber instruction boxes.** They are not
-  dropped. An instruction the authors cannot see is an instruction they will not act on; delete the
-  boxes once the artwork is placed.
-- Figure captions are detected by their `**Fig. N.**` prefix and indented, so they read as captions
-  rather than body text.
-
-## Single column, deliberately
-
-IEEE requires its own official template for camera-ready submission, and a two-column Word file
-with wide tables is painful to edit. This produces a clean single-column manuscript whose sections
-paste cleanly into the official template once the content is final.
+US Letter, 0.75 in top, 1.0 in bottom and 0.625 in side margins; a single-column title block
+followed by two equal 3.5 in columns with a 0.25 in gutter; Times New Roman 10 pt body, 8 pt
+captions. All figures are inline (no floating images) and sized to 3.4 in so each fits one column.
