@@ -38,7 +38,10 @@ from dataset_tools import config as dt_config, ingest as dt_ingest  # noqa: E402
 
 log = logging.getLogger("ai_orchestration.evaluation.prepare")
 
-NON_FAULTY_PHASES = ("baseline_metrics", "recovery_metrics")
+# Which phases may train a detector. Sourced from config so the choice is one documented
+# switch rather than a literal buried here; see ai_config.TRAINING_PHASES for why the
+# shipped default (NORMAL + RECOVERY) is known to be wrong but kept for reproducibility.
+NON_FAULTY_PHASES = tuple(ai_config.TRAINING_PHASES)
 
 
 def _load_memory_incidents() -> list[dict]:

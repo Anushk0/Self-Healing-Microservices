@@ -1,0 +1,627 @@
+{
+ "faults": [
+  {
+   "id": "inc-0014",
+   "score": -0.034769,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "auth-key-error"
+  },
+  {
+   "id": "inc-0006",
+   "score": -0.029948,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "auth-key-error"
+  },
+  {
+   "id": "inc-0005",
+   "score": -0.041295,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "auth-key-error"
+  },
+  {
+   "id": "inc-0002",
+   "score": -0.021338,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "auth-key-error"
+  },
+  {
+   "id": "inc-0017",
+   "score": -0.074104,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "auth-key-error"
+  },
+  {
+   "id": "inc-0016",
+   "score": -0.040035,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "auth-key-error"
+  },
+  {
+   "id": "inc-0015",
+   "score": -0.07326,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "auth-key-error"
+  },
+  {
+   "id": "inc-0012",
+   "score": -0.056318,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "auth-key-error"
+  },
+  {
+   "id": "inc-0011",
+   "score": 0.024546,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "auth-key-error"
+  },
+  {
+   "id": "inc-0010",
+   "score": 0.006687,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "auth-key-error"
+  },
+  {
+   "id": "inc-0004",
+   "score": -0.0853,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "auth-key-error"
+  },
+  {
+   "id": "inc-0013",
+   "score": -0.058475,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "auth-key-error"
+  },
+  {
+   "id": "inc-0027",
+   "score": -0.028991,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "db-lock"
+  },
+  {
+   "id": "inc-0033",
+   "score": -0.044775,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "db-lock"
+  },
+  {
+   "id": "inc-0019",
+   "score": -0.01791,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "db-lock"
+  },
+  {
+   "id": "inc-0034",
+   "score": -0.006001,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "db-lock"
+  },
+  {
+   "id": "inc-0025",
+   "score": -0.01594,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "db-lock"
+  },
+  {
+   "id": "inc-0026",
+   "score": 0.018752,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "db-lock"
+  },
+  {
+   "id": "inc-0023",
+   "score": -0.001533,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "db-lock"
+  },
+  {
+   "id": "inc-0021",
+   "score": -0.027464,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "db-lock"
+  },
+  {
+   "id": "inc-0031",
+   "score": -0.017306,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "db-lock"
+  },
+  {
+   "id": "inc-0028",
+   "score": -0.029758,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "db-lock"
+  },
+  {
+   "id": "inc-0024",
+   "score": 0.024714,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "db-lock"
+  },
+  {
+   "id": "inc-0018",
+   "score": -0.013183,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "db-lock"
+  },
+  {
+   "id": "inc-0039",
+   "score": -0.012013,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "memory-leak"
+  },
+  {
+   "id": "inc-0036",
+   "score": 0.005759,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "memory-leak"
+  },
+  {
+   "id": "inc-0041",
+   "score": -0.054406,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "memory-leak"
+  },
+  {
+   "id": "inc-0051",
+   "score": 0.00769,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "memory-leak"
+  },
+  {
+   "id": "inc-0048",
+   "score": 0.021063,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "memory-leak"
+  },
+  {
+   "id": "inc-0050",
+   "score": -0.038724,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "memory-leak"
+  },
+  {
+   "id": "inc-0045",
+   "score": -0.067768,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "memory-leak"
+  },
+  {
+   "id": "inc-0046",
+   "score": -0.074134,
+   "cross": false,
+   "sig_ok": false,
+   "matched": false,
+   "fault_type": "memory-leak"
+  },
+  {
+   "id": "inc-0043",
+   "score": -0.061363,
+   "cross": false,
+   "sig_ok": false,
+   "matched": false,
+   "fault_type": "memory-leak"
+  },
+  {
+   "id": "inc-0035",
+   "score": -0.020346,
+   "cross": false,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "memory-leak"
+  },
+  {
+   "id": "inc-0038",
+   "score": 0.018567,
+   "cross": false,
+   "sig_ok": false,
+   "matched": false,
+   "fault_type": "memory-leak"
+  },
+  {
+   "id": "inc-0047",
+   "score": -0.068594,
+   "cross": false,
+   "sig_ok": false,
+   "matched": false,
+   "fault_type": "memory-leak"
+  },
+  {
+   "id": "inc-0067",
+   "score": 7.7e-05,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "notification-latency"
+  },
+  {
+   "id": "inc-0065",
+   "score": 0.001766,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "notification-latency"
+  },
+  {
+   "id": "inc-0064",
+   "score": -0.047913,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "notification-latency"
+  },
+  {
+   "id": "inc-0053",
+   "score": -0.044429,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "notification-latency"
+  },
+  {
+   "id": "inc-0061",
+   "score": -0.065413,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "notification-latency"
+  },
+  {
+   "id": "inc-0062",
+   "score": -0.046561,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "notification-latency"
+  },
+  {
+   "id": "inc-0059",
+   "score": -0.060551,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "notification-latency"
+  },
+  {
+   "id": "inc-0058",
+   "score": -0.051723,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "notification-latency"
+  },
+  {
+   "id": "inc-0055",
+   "score": -0.057766,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "notification-latency"
+  },
+  {
+   "id": "inc-0052",
+   "score": -0.034733,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "notification-latency"
+  },
+  {
+   "id": "inc-0054",
+   "score": -0.007936,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "notification-latency"
+  },
+  {
+   "id": "inc-0063",
+   "score": -0.024507,
+   "cross": true,
+   "sig_ok": true,
+   "matched": true,
+   "fault_type": "notification-latency"
+  }
+ ],
+ "healthy": {
+  "normal": [
+   -0.045009,
+   -0.045276,
+   -0.042945,
+   -0.027245,
+   -0.078458,
+   -0.041905,
+   -0.066577,
+   -0.053187,
+   0.012413,
+   -0.034921,
+   -0.07056,
+   -0.055961,
+   -0.037281,
+   -0.039609,
+   -0.029501,
+   -0.038801,
+   -0.020964,
+   -0.020792,
+   -0.014247,
+   -0.032596,
+   -0.017872,
+   -0.027346,
+   0.013552,
+   -0.018337,
+   -0.040556,
+   -0.018718,
+   -0.111848,
+   -0.066725,
+   -0.016653,
+   -0.062436,
+   -0.080901,
+   -0.082637,
+   -0.069455,
+   -0.054051,
+   -0.02462,
+   -0.053749,
+   -0.018822,
+   -0.043557,
+   -0.05967,
+   -0.053027,
+   -0.077795,
+   -0.087404,
+   -0.075024,
+   -0.059226,
+   -0.080237,
+   -0.058115,
+   -0.0414,
+   -0.042006
+  ],
+  "recovery": [
+   -0.034909,
+   -0.024503,
+   -0.035281,
+   -0.018614,
+   -0.069311,
+   -0.036407,
+   -0.074652,
+   -0.052018,
+   0.037357,
+   0.047536,
+   -0.075339,
+   -0.06132,
+   -0.021741,
+   -0.034346,
+   -0.01132,
+   0.014952,
+   -0.007592,
+   0.032706,
+   0.013448,
+   -0.027464,
+   -0.020051,
+   -0.024213,
+   0.044029,
+   -0.012423,
+   0.016292,
+   0.011584,
+   -0.017461,
+   0.03393,
+   0.047578,
+   -0.019257,
+   -0.068638,
+   -0.053149,
+   -0.051278,
+   0.007132,
+   0.043923,
+   -0.056573,
+   -0.011065,
+   0.011113,
+   -0.043455,
+   -0.058173,
+   -0.08588,
+   -0.072217,
+   -0.082356,
+   -0.058829,
+   -0.071204,
+   -0.052003,
+   -0.004941,
+   -0.045956
+  ]
+ },
+ "sweep": [
+  [
+   -0.02,
+   18,
+   5,
+   17,
+   17,
+   8,
+   21
+  ],
+  [
+   -0.01,
+   13,
+   5,
+   12,
+   12,
+   2,
+   15
+  ],
+  [
+   -0.005,
+   11,
+   4,
+   10,
+   10,
+   2,
+   14
+  ],
+  [
+   0.0,
+   10,
+   4,
+   9,
+   9,
+   2,
+   13
+  ],
+  [
+   0.002,
+   8,
+   2,
+   7,
+   7,
+   2,
+   13
+  ],
+  [
+   0.004,
+   8,
+   2,
+   7,
+   7,
+   2,
+   13
+  ],
+  [
+   0.005,
+   8,
+   2,
+   7,
+   7,
+   2,
+   13
+  ],
+  [
+   0.006,
+   7,
+   2,
+   6,
+   6,
+   2,
+   13
+  ],
+  [
+   0.008,
+   5,
+   1,
+   4,
+   4,
+   2,
+   12
+  ],
+  [
+   0.01,
+   5,
+   1,
+   4,
+   4,
+   2,
+   12
+  ],
+  [
+   0.012,
+   5,
+   1,
+   4,
+   4,
+   2,
+   10
+  ],
+  [
+   0.015,
+   5,
+   1,
+   4,
+   4,
+   0,
+   8
+  ],
+  [
+   0.02,
+   3,
+   1,
+   3,
+   3,
+   0,
+   7
+  ],
+  [
+   0.025,
+   0,
+   0,
+   0,
+   0,
+   0,
+   7
+  ],
+  [
+   0.03,
+   0,
+   0,
+   0,
+   0,
+   0,
+   7
+  ]
+ ]
+}

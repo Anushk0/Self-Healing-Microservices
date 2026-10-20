@@ -1,0 +1,1 @@
+{"incident": "inc-0002", "detail": "auth-key-error \u2192 auth-service", "label": "resolved", "tone": "success", "when": "15:40:17 UTC", "at": "2026-10-19T15:40:17.325508+00:00", "arm": "multi-agent", "detection_mode": "signature"}

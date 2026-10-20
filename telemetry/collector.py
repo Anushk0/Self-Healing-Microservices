@@ -27,6 +27,11 @@ from .payment_probe import PaymentProbe
 from .storage import JsonlWriter
 from .util import new_correlation_id, now_iso
 
+try:  # package import, or direct script execution
+    from .rates import RateTracker
+except ImportError:  # pragma: no cover
+    from rates import RateTracker
+
 log = logging.getLogger("telemetry.collector")
 
 
@@ -166,6 +171,24 @@ def parse_metrics(text: str) -> dict:
         round((client_sum / client_count) * 1000, 3) if client_sum is not None and client_count else None
     )
 
+    # --- Raw cumulative totals, kept so rates can be derived downstream -----------------------
+    # `http_server_requests_count`, `..._error_count` and the two `..._avg_duration_ms` fields
+    # above are all *cumulative since JVM start*: the counts only ever increase, and the averages
+    # are lifetime totals (sum / count), not current latency. That has two consequences on a live
+    # system which the replayed synthetic corpus does not reproduce:
+    #
+    #   - After the first 4xx/5xx the service ever returns - one mistyped password is enough -
+    #     `http_server_requests_error_count` stays above zero until the pod restarts, so the
+    #     auth-key-error signature (`> 0.5`) matches on every subsequent cycle.
+    #   - A lifetime average is diluted at fault onset and stays elevated long after recovery,
+    #     so the notification-latency signature both fires late and clears late.
+    #
+    # Exposing the raw sums alongside the existing fields lets `rates.RateTracker` derive windowed
+    # values without changing any existing field, so trained models and the replay corpus are
+    # unaffected.
+    metrics["http_server_requests_duration_sum_s"] = server_sum
+    metrics["http_client_requests_duration_sum_s"] = client_sum
+
     # --- General process signals ---
     metrics["process_cpu_usage"] = _first_sample(fams.get("process_cpu_usage"))
     metrics["system_cpu_usage"] = _first_sample(fams.get("system_cpu_usage"))
@@ -231,9 +254,15 @@ class Collector:
         self._probe_writer = JsonlWriter(resolved_data_dir, "payment_probes")
         self._payment_probe = PaymentProbe()
         self._stop = False
+        self._rates = RateTracker()
 
     def run_once(self) -> None:
         for record in collect_cycle():
+            # Cumulative counters are useless as live signals (see telemetry/rates.py); derive
+            # windowed rates alongside them. Purely additive - existing fields are untouched.
+            record["derived"] = self._rates.derive(
+                record.get("service"), record.get("metrics"), record.get("timestamp")
+            )
             self._telemetry_writer.write(record)
             if record["collection_error"]:
                 log.warning("collection error for %s: %s", record["service"], record["collection_error"])

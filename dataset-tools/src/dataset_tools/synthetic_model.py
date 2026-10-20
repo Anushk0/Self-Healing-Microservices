@@ -16,6 +16,7 @@ configuration, because it reuses those same bounds.
 """
 from __future__ import annotations
 
+import os
 import random
 import zlib
 from datetime import datetime, timedelta, timezone
@@ -160,9 +161,34 @@ def generate_synthetic_incident(fault_type: str, index: int, base_seed: int, bas
         ticks = int((fault_s * 1000) // params["interval_ms"])
         retained_final = min(ticks * params["chunk_size_bytes"], params["max_total_bytes"])
         fault_metrics[root]["jvm_memory_used_bytes"] = round(baseline_metrics[root]["jvm_memory_used_bytes"] + retained_final / 2, 1)
-        # Recovery plateaus rather than dropping instantly - matches real observed JVM behavior
-        # (reset stops new allocation but doesn't force an immediate GC).
-        recovery_metrics[root]["jvm_memory_used_bytes"] = round(baseline_metrics[root]["jvm_memory_used_bytes"] + retained_final, 1)
+        # Recovery heap after the fault is reset.
+        #
+        # The legacy model plateaus at `baseline + retained_final`, i.e. the FULL leaked amount,
+        # while the fault window averages `baseline + retained_final / 2` across the ramp. That
+        # makes the recovery phase *always further from baseline than the fault it follows* -
+        # measured at up to 7.2x baseline against roughly 4x during the fault. Three things break
+        # as a result:
+        #
+        #   1. `evaluation/prepare.py` trains detectors on NORMAL + RECOVERY as "non-faulty", so
+        #      the model learns that a fully leaked heap is normal and stops flagging the fault.
+        #   2. The negative control scores healthy-phase records that are not healthy, so its
+        #      recovery-phase "false positives" are partly correct detections.
+        #   3. It does not match the implementation. `MemoryLeakFaultService.reset()` calls
+        #      `retainedChunks.clear()`, which makes every chunk eligible for GC; the heap falls
+        #      back toward baseline rather than holding the full leak indefinitely.
+        #
+        # `MEMORY_LEAK_RECOVERY_RETENTION` is the fraction of the leak still resident when the
+        # recovery window is averaged. 1.0 reproduces the published corpus exactly and is the
+        # default so existing artefacts stay reproducible (rule 23). A small value such as 0.1
+        # models "reset cleared the references and a GC cycle has mostly run", which is what the
+        # Java code actually does. Changing it requires regenerating the dataset, retraining the
+        # detectors and re-running the evaluation - every published number depends on it.
+        recovery_retention = float(
+            os.environ.get("DATASET_TOOLS_MEMORY_LEAK_RECOVERY_RETENTION", "1.0")
+        )
+        recovery_metrics[root]["jvm_memory_used_bytes"] = round(
+            baseline_metrics[root]["jvm_memory_used_bytes"] + retained_final * recovery_retention, 1
+        )
         fault_config_response = {"faultActive": True, "retainedBytes": retained_final, "message": "Memory leak fault injected."}
         fault_probe = dict(baseline_probe)
         fault_probe["count"] = fault_probe_count

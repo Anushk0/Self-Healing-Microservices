@@ -74,6 +74,7 @@ why the recursion limit matters once retries exist. See README.md "Week 10 archi
 """
 from __future__ import annotations
 
+import dataclasses
 import logging
 from datetime import datetime, timezone
 from typing import Optional
@@ -97,6 +98,9 @@ from ..execution.executor import execute_approved_action
 from ..execution.models import ExecutionResult
 from ..feedback import writer as feedback_writer
 from ..rca import analyzer as rca_analyzer
+from ..anomaly.gmm_detector import load_all as load_gmm_detectors
+from ..anomaly.robust_detector import load_all as load_robust_detectors
+from ..rca import signatures as rca_signatures
 from ..rca.models import RootCauseAnalysis
 from ..remediation import proposer as remediation_proposer
 from ..remediation.models import RemediationProposal
@@ -119,6 +123,11 @@ def _extract_features_node(state: WorkflowState) -> dict:
 
 
 def _make_detect_anomaly_node(detectors: dict[str, AnomalyDetector]):
+    # Loaded once per graph build, not per record. Empty unless the robust baselines have been
+    # fitted (python -m ai_orchestration.evaluation.prepare --robust).
+    robust = load_robust_detectors()
+    gmm = load_gmm_detectors()
+
     def _detect_anomaly_node(state: WorkflowState) -> dict:
         record = state["raw_record"]
         feature_vector_dict = state.get("feature_vector")
@@ -135,7 +144,36 @@ def _make_detect_anomaly_node(detectors: dict[str, AnomalyDetector]):
 
         fv = FeatureVector.from_dict(feature_vector_dict)
         detector = detectors.get(fv.service)
+
+        # Deterministic fault-signature matching, used as a detection signal in its own right.
+        # `rca/signatures.py` already encodes what a fault looks like per service; running it here
+        # as well as downstream means an incident is not discarded before the deterministic layer
+        # has seen it. See config.DETECTION_MODE for the measured comparison and for why the
+        # Isolation Forest alone surfaces so little.
+        signature_hit = bool(rca_signatures.match_signatures(fv.service, fv.raw_metrics))
+        # A signature can only speak for a service it was written for: the four signatures name
+        # payment-service and ledger-service as their symptom services, so no signature is ever
+        # applicable to auth-service or notification-service. Treating "no signature matched" as
+        # "nothing is wrong" on those services would make them permanently undetectable, so where
+        # no signature applies the Isolation Forest remains the detector.
+        signature_applies = any(
+            s.symptom_service == fv.service for s in rca_signatures.FAULT_SIGNATURES
+        )
+        mode = ai_config.DETECTION_MODE
+
         if detector is None or not detector.is_trained:
+            # No model is no longer fatal: a signature can still identify the fault on its own.
+            if mode in ("signature", "either") and signature_hit:
+                result = AnomalyResult(
+                    service=fv.service, timestamp=fv.timestamp, correlation_id=fv.correlation_id,
+                    status="scored", anomaly_score=None, is_anomaly=True,
+                    threshold=ai_config.ANOMALY_SCORE_THRESHOLD,
+                    relevant_feature_values=fv.raw_metrics, model_version="signature-match-v1",
+                    feature_schema_version=ai_config.FEATURE_SCHEMA_VERSION,
+                    reason=(f"No trained detector for '{fv.service}', but the metrics match a known "
+                            f"fault signature, so this record is treated as anomalous."),
+                )
+                return {"anomaly_result": result.to_dict(), "detected_at": _now_iso()}
             result = AnomalyResult(
                 service=fv.service, timestamp=fv.timestamp, correlation_id=fv.correlation_id,
                 status="no_model", anomaly_score=None, is_anomaly=None, threshold=0.0,
@@ -145,6 +183,48 @@ def _make_detect_anomaly_node(detectors: dict[str, AnomalyDetector]):
             return {"anomaly_result": result.to_dict()}
 
         scored = detector.score(fv)
+        forest_hit = bool(scored.is_anomaly)
+
+        learned = {"robust": robust, "gmm": gmm}.get(mode, {}).get(fv.service)
+        robust_result = None
+        if learned is not None and learned.is_trained:
+            try:
+                robust_result = learned.score(fv)
+            except ValueError as exc:   # schema drift between detectors
+                log.warning("%s detector could not score %s: %s", mode, fv.service, exc)
+
+        if robust_result is not None:
+            # The robust detector supersedes the forest's verdict *and* its score, because the
+            # two are on different scales: sigmas from normal rather than a negated isolation
+            # depth. Reporting the forest's number beside a robust verdict would be misleading.
+            update: dict = {"anomaly_result": robust_result.to_dict()}
+            if robust_result.is_anomaly:
+                update["detected_at"] = _now_iso()
+            return update
+
+        decided = {
+            "isolation_forest": forest_hit,
+            "signature": signature_hit if signature_applies else forest_hit,
+            "either": forest_hit or signature_hit,
+            "robust": forest_hit,   # no learned baseline for this service: fall back
+            "gmm": forest_hit,
+        }[mode]
+
+        if decided != forest_hit:
+            # The score itself is never rewritten - only the verdict drawn from it - so the raw
+            # Isolation Forest output stays auditable alongside the decision that was acted on.
+            scored = dataclasses.replace(
+                scored,
+                is_anomaly=decided,
+                reason=(
+                    f"Detection mode '{mode}': signature "
+                    f"{'match=' + str(signature_hit) if signature_applies else 'not applicable to this service'}, "
+                    f"Isolation Forest={forest_hit} (score {scored.anomaly_score} against "
+                    f"threshold {scored.threshold}). Verdict: "
+                    f"{'anomalous' if decided else 'normal'}."
+                ),
+            )
+
         update: dict = {"anomaly_result": scored.to_dict()}
         if scored.is_anomaly:
             # Week 10: start the MTTR clock at the moment of detection (see state.py's

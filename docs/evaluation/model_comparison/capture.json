@@ -1,0 +1,85 @@
+{
+  "source": "live capture (per-cycle) from C:\\Users\\agraw\\OneDrive\\Desktop\\capstone\\aiops-capstone\\telemetry\\data\\real_capture",
+  "training_records": 1054,
+  "fault_records": 179,
+  "healthy_records": 1055,
+  "results": [
+    {
+      "model": "IsolationForest",
+      "auc_all": 0.8450792978368503,
+      "auc_cross": NaN,
+      "auc_same": 0.8450792978368503,
+      "error": ""
+    },
+    {
+      "model": "LocalOutlierFactor",
+      "auc_all": 0.6988773862162091,
+      "auc_cross": NaN,
+      "auc_same": 0.6988773862162091,
+      "error": ""
+    },
+    {
+      "model": "OneClassSVM",
+      "auc_all": 0.9310227964732982,
+      "auc_cross": NaN,
+      "auc_same": 0.9310227964732982,
+      "error": ""
+    },
+    {
+      "model": "Mahalanobis+shrink",
+      "auc_all": 0.9621594429293865,
+      "auc_cross": NaN,
+      "auc_same": 0.9621594429293865,
+      "error": ""
+    },
+    {
+      "model": "kNN distance",
+      "auc_all": 0.9679101908972967,
+      "auc_cross": NaN,
+      "auc_same": 0.9679101908972967,
+      "error": ""
+    },
+    {
+      "model": "PCA reconstruction",
+      "auc_all": 0.8055707061346608,
+      "auc_cross": NaN,
+      "auc_same": 0.8055707061346608,
+      "error": ""
+    },
+    {
+      "model": "Autoencoder (MLP)",
+      "auc_all": 0.9792845984802351,
+      "auc_cross": NaN,
+      "auc_same": 0.9792845984802351,
+      "error": ""
+    },
+    {
+      "model": "GMM likelihood",
+      "auc_all": 0.9868357647806402,
+      "auc_cross": NaN,
+      "auc_same": 0.9868357647806402,
+      "error": ""
+    },
+    {
+      "model": "ECOD",
+      "auc_all": 0.9176679287246154,
+      "auc_cross": NaN,
+      "auc_same": 0.9176679287246154,
+      "error": ""
+    },
+    {
+      "model": "Z-score (max)",
+      "auc_all": 0.9622441684979746,
+      "auc_cross": NaN,
+      "auc_same": 0.9622441684979746,
+      "error": ""
+    },
+    {
+      "model": "Robust MAD (max)",
+      "auc_all": 0.9341549948370357,
+      "auc_cross": NaN,
+      "auc_same": 0.9341549948370357,
+      "error": ""
+    }
+  ]
+}

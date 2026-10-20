@@ -151,6 +151,127 @@ RAG_MAY_OVERRIDE_SIGNATURE = os.environ.get(
     "AI_ORCHESTRATION_RAG_MAY_OVERRIDE_SIGNATURE", "false"
 ).lower() == "true"
 
+# --- Detector training phases ------------------------------------------------------------------
+#
+# Which phases of a Memory-set incident count as "non-faulty" and may be used to train a detector.
+#
+# The shipped default is NORMAL + RECOVERY, and it is kept as the default so the published
+# evaluation stays reproducible (rule 23). It is, however, known to be wrong, and the reason is
+# worth stating precisely because it is the largest single cause of the reported 79.2% abstention
+# rate:
+#
+#   `dataset_tools.synthetic_model` sets a memory-leak incident's RECOVERY heap to
+#   `baseline + retained_final` while setting its FAULT heap to `baseline + retained_final / 2`
+#   (the fault window is an average over a ramp; recovery is the final plateau). The recovery
+#   phase is therefore *always* further from baseline than the fault window it follows - measured
+#   at up to 7.2x baseline against roughly 4x during the fault.
+#
+#   Training on that teaches a detector that a leaked heap is normal. The evaluation's memory-leak
+#   fault windows (45-139 MB) fall inside the range the model learned as healthy (up to 243 MB),
+#   so they do not read as anomalous. Excluding RECOVERY from training raises detection from
+#   10/48 to 19/48 and db-lock detection from 2/12 to 9/12 on the shipped corpus.
+#
+#   The same construction means the negative control's RECOVERY phase is not a healthy sample
+#   either, so part of the reported 27.08% recovery-phase "false positive" rate is a detector
+#   correctly flagging genuinely elevated heap.
+#
+# Set AI_ORCHESTRATION_TRAINING_PHASES=baseline_metrics to train on NORMAL only. Doing so changes
+# the trained models and therefore every published number - regenerate the evaluation artefacts if
+# you flip it.
+TRAINING_PHASES: tuple[str, ...] = tuple(
+    p.strip()
+    for p in os.environ.get(
+        "AI_ORCHESTRATION_TRAINING_PHASES", "baseline_metrics,recovery_metrics"
+    ).split(",")
+    if p.strip()
+)
+
+# --- Detection strategy ---------------------------------------------------------------------------
+#
+# What decides that a telemetry record is anomalous and worth diagnosing.
+#
+#   "signature"        deterministic fault-signature matching (rca/signatures.py) decides.
+#   "isolation_forest" the per-service Isolation Forest decides. Reproduces the published run.
+#   "either"           anomalous if either fires.
+#   "robust"           a learned per-feature median/MAD deviation detector
+#                      (anomaly/robust_detector.py).
+#   "gmm"              a Gaussian mixture model of normal behaviour, scored by negative
+#                      log-likelihood (anomaly/gmm_detector.py).
+#
+# Measured on the 48-incident Evaluation set, symptom-service records, default threshold:
+#
+#   mode              detected   cross-service   FP normal   FP recovery
+#   isolation_forest    10/48         4/24          2/48        13/48
+#   signature           44/48        24/24          0/48        11/48
+#   either              45/48        24/24          2/48        18/48
+#
+# "signature" is the default because it dominates: more than four times the coverage, every
+# cross-service incident instead of one in six, and fewer false positives in both phases. "either"
+# buys one extra detection for nearly double the false alarms, which no closed loop could use.
+#
+# Why the Isolation Forest does so badly here is worth recording, because it is not a tuning
+# problem. The features that carry the fault signal have *zero variance* in the training data -
+# a healthy service always reports 0 active HikariCP connections and 0 HTTP errors - and an
+# Isolation Forest splits each feature at a random point between its training min and max. When
+# those are equal there is no split to make, so the feature cannot contribute to isolation at all.
+# A threshold handles "normally exactly zero, now 16" trivially; an outlier detector cannot.
+# Sweeping the score threshold does not help: across the whole sweep cross-service coverage never
+# exceeds 5 of 24, and the cross-service ranking is statistically indistinguishable from chance
+# (AUC 0.474, 95% CI [0.346, 0.602]).
+#
+# A sixfold model comparison on identical terms (same training partition, features, records and
+# negative control), reported as threshold-independent ROC AUC where 0.5 is chance:
+#
+#   model                 AUC all   AUC cross-service
+#   IsolationForest         0.558         0.474
+#   LocalOutlierFactor      0.557         0.430
+#   EllipticEnvelope        0.659         0.728
+#   OneClassSVM             0.842         0.967
+#   Z-score (max)           0.863         1.000
+#   Robust MAD (max)        0.935         1.000
+#
+# Both density- and tree-based detectors fail here for the same structural reason given above;
+# every per-feature distance method succeeds. "robust" is therefore the better learned detector,
+# and is preferred over "signature" where a detector that generalises beyond the known fault
+# catalogue is wanted.
+#
+# Set AI_ORCHESTRATION_DETECTION_MODE=isolation_forest to reproduce the published evaluation.
+# Threshold for the robust detector, in sigmas from the learned per-feature normal. 12 was chosen
+# from the sweep in docs/evaluation/: at 12 the detector surfaces 41 of 48 incidents and all 24
+# cross-service incidents with zero normal-phase false positives; tightening to 30 gives 36 of 48
+# with zero false positives in either phase.
+ROBUST_DETECTOR_THRESHOLD = float(os.environ.get("AI_ORCHESTRATION_ROBUST_THRESHOLD", "12.0"))
+
+# Gaussian Mixture detector (anomaly/gmm_detector.py). Diagonal covariance and a covariance floor
+# are what make a mixture model estimable from 40 samples per service; see that module for why.
+GMM_MAX_COMPONENTS = int(os.environ.get("AI_ORCHESTRATION_GMM_MAX_COMPONENTS", "2"))
+GMM_REG_COVAR = float(os.environ.get("AI_ORCHESTRATION_GMM_REG_COVAR", "1e-4"))
+GMM_THRESHOLD = float(os.environ.get("AI_ORCHESTRATION_GMM_THRESHOLD", "40.0"))
+
+DETECTION_MODE = os.environ.get("AI_ORCHESTRATION_DETECTION_MODE", "signature").strip().lower()
+if DETECTION_MODE not in ("signature", "isolation_forest", "either", "robust", "gmm"):
+    raise ValueError(
+        f"AI_ORCHESTRATION_DETECTION_MODE must be one of 'signature', 'isolation_forest', "
+        f"'either', 'robust' or 'gmm'; got {DETECTION_MODE!r}."
+    )
+
+# --- Recovery verification ----------------------------------------------------------------------
+#
+# Whether recovery is verified by re-reading the service's own /fault-status debug endpoint.
+#
+# `evaluation/replay.py` deliberately withholds /fault-status from the diagnosis path on the
+# grounds that, for a same-service fault, it is effectively the answer key. Verifying recovery
+# against that same endpoint reintroduces the dependency the replay protocol removed, and no
+# production service exposes it. The metric-based check (see execution/verify.py) instead
+# re-observes the metric whose threshold triggered detection and asks whether it has returned
+# below that threshold, which is what a real deployment can actually do.
+#
+# Default True preserves the published behaviour; the metric check runs alongside it either way
+# and is always recorded.
+VERIFY_USING_FAULT_STATUS = os.environ.get(
+    "AI_ORCHESTRATION_VERIFY_USING_FAULT_STATUS", "true"
+).lower() == "true"
+
 # --- Ollama ---------------------------------------------------------------------------------
 
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")

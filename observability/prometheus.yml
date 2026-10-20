@@ -1,0 +1,41 @@
+# Scrape configuration for the Docker Compose stack.
+#
+# Deliberately identical in shape to k8s/prometheus-config.yaml - the same four jobs against the
+# same /actuator/prometheus path - so a metric behaves the same whether the estate is running
+# under Compose or under Kubernetes. Only the target hostnames differ, because Compose resolves
+# service names on its own network.
+#
+# A 5s interval rather than the cluster's 15s: the controlled faults are injected and reset by
+# hand during a demonstration, and at 15s a short fault window can produce only one or two points.
+global:
+  scrape_interval: 5s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: auth-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["auth-service:8081"]
+        labels:
+          service: auth-service
+
+  - job_name: payment-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["payment-service:8082"]
+        labels:
+          service: payment-service
+
+  - job_name: ledger-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["ledger-service:8083"]
+        labels:
+          service: ledger-service
+
+  - job_name: notification-service
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: ["notification-service:8084"]
+        labels:
+          service: notification-service
